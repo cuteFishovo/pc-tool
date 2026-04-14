@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B站视频转url在线工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        
+        body {
+            background-color: #0000007a;
+            padding: 20px;
+            padding-bottom: 60px;
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #fb7299;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #e0e0e0;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .subtitle a {
+            color: #4299e1;
+            text-decoration: none;
+        }
+        
+        .subtitle a:hover {
+            color: #3182ce;
+            text-decoration: underline;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #ffffff;
+            font-size: 15px;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #444;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+        
+        input:focus {
+            border-color: #fb7299;
+            background-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(251, 114, 153, 0.2);
+        }
+        
+        input::placeholder {
+            color: #aaaaaa;
+        }
+        
+        .paste-btn {
+            width: auto;
+            padding: 12px 18px;
+            background-color: #9f7aea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0;
+        }
+        
+        .paste-btn:hover {
+            background-color: #805ad5;
+            transform: translateY(-1px);
+        }
+        
+        #extract-btn {
+            width: 100%;
+            padding: 14px 12px;
+            background-color: #fb7299;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        #extract-btn:hover {
+            background-color: #e86088;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(251, 114, 153, 0.2);
+        }
+
+        .tutorial-btn {
+            width: 100%;
+            padding: 14px 12px;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .tutorial-btn:hover {
+            background-color: #3182ce;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+        }
+        
+        .error {
+            color: #ff6b6b;
+            margin-top: 10px;
+            display: none;
+            font-size: 14px;
+            padding: 8px 12px;
+            background-color: rgba(248, 215, 218, 0.2);
+            border-radius: 6px;
+            border-left: 3px solid #e53e3e;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(240, 248, 251, 0.2) 0%, rgba(232, 244, 248, 0.2) 100%);
+            border-radius: 12px;
+            word-break: break-all;
+            box-shadow: 0 2px 8px rgba(66, 153, 225, 0.1);
+            border: 1px solid rgba(222, 226, 230, 0.2);
+            display: none;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        #result-text {
+            padding: 12px 15px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(226, 232, 240, 0.2);
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .copy-btn {
+            background-color: #4299e1;
+            margin-top: 0;
+            width: auto;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .copy-btn:hover {
+            background-color: #3182ce;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .site-watermark {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #00eeff;
+            font-size: 14px;
+            border-radius: 6px;
+            font-weight: 500;
+            z-index: 999;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="site-watermark">此网址有人维护 有问题请反馈qq1003294905</div>
+
+    <div class="container">
+        <h1>B站视频转url在线工具</h1>
+        <div class="subtitle">网址程序为开源代码 可在<a href="https://github.com/cuteFishovo/pc-tool" target="_blank">github查看</a> 有问题意见请反馈qq1003294905</div>
+        <div class="subtitle" style="margin-top: -8px;">vrchat可食用§(*￣▽￣*)§ 其实就是给vrc写的 但是叫转url更好一些</div>
+
+        <button class="tutorial-btn" id="tutorial-btn-bilibili">查看使用教程 B站源</button>
+
+        <div class="form-group">
+            <label for="bilibili-url">输入B站视频链接：</label>
+            <div class="input-wrapper">
+                <input type="text" id="bilibili-url" placeholder="例如：https://www.bilibili.com/video/BV*******/...">
+                <button class="paste-btn" id="paste-url-btn">粘贴</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="prefix-url">api链接(自带就是可用链接 不可用请在qq1003294905反馈)：</label>
+            <div class="input-wrapper">
+                <input type="text" id="prefix-url" value="http://ckapi.sevenbrothers.cn/bili/api?id=" placeholder="输入api链接">
+                <button class="paste-btn" id="paste-prefix-btn">粘贴</button>
+            </div>
+        </div>
+        
+        <button id="extract-btn">提取并生成链接</button>
+        <div class="error" id="error-msg">请输入有效的B站链接！</div>
+        
+        <div class="result" id="result-area">
+            <div class="result-title">生成结果</div>
+            <div id="result-text"></div>
+            <button class="copy-btn" id="copy-btn">复制结果</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const urlInput = document.getElementById('bilibili-url');
+        const prefixInput = document.getElementById('prefix-url');
+        const extractBtn = document.getElementById('extract-btn');
+        const resultArea = document.getElementById('result-area');
+        const resultText = document.getElementById('result-text');
+        const copyBtn = document.getElementById('copy-btn');
+        const errorMsg = document.getElementById('error-msg');
+        const pasteUrlBtn = document.getElementById('paste-url-btn');
+        const pastePrefixBtn = document.getElementById('paste-prefix-btn');
+        const toast = document.getElementById('toast');
+        const tutorialBtnBilibili = document.getElementById('tutorial-btn-bilibili');
+
+        extractBtn.addEventListener('click', function() {
+            const url = urlInput.value.trim();
+            const prefix = prefixInput.value.trim();
+            
+            errorMsg.style.display = 'none';
+            resultArea.style.display = 'none';
+            
+            if (!url) {
+                errorMsg.textContent = '请输入有效的B站链接！';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            const bvPattern = /BV[a-zA-Z0-9]{10}/;
+            const match = url.match(bvPattern);
+            
+            if (match) {
+                const bvCode = match[0];
+                const finalUrl = prefix + bvCode;
+                
+                resultText.textContent = finalUrl;
+                resultArea.style.display = 'block';
+            } else {
+                errorMsg.textContent = '未能从链接中提取到BV码，请检查链接是否正确！';
+                errorMsg.style.display = 'block';
+            }
+        });
+        
+        copyBtn.addEventListener('click', async function() {
+            try {
+                await navigator.clipboard.writeText(resultText.textContent);
+                showToast('复制成功！');
+            } catch (err) {
+                showToast('复制失败，请手动复制！');
+                console.error(err);
+            }
+        });
+        
+        pasteUrlBtn.addEventListener('click', async function() {
+            try {
+                const text = await navigator.clipboard.readText();
+                urlInput.value = text.trim();
+                showToast('粘贴成功！');
+            } catch (err) {
+                showToast('粘贴失败，请手动粘贴！');
+                console.error(err);
+            }
+        });
+        
+        pastePrefixBtn.addEventListener('click', async function() {
+            try {
+                const text = await navigator.clipboard.readText();
+                prefixInput.value = text.trim();
+                showToast('粘贴成功！');
+            } catch (err) {
+                showToast('粘贴失败，请手动粘贴！');
+                console.error(err);
+            }
+        });
+        
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
+        urlInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                extractBtn.click();
+            }
+        });
+
+        tutorialBtnBilibili.addEventListener('click', function() {
+            const tutorialUrl = 'https://www.bilibili.com/video/BV1GpcQzpEa9/?share_source=copy_web&vd_source=2b36761489223d0bcb938551a82ccb91';
+            window.open(tutorialUrl, '_blank');
+        });
+    </script>
+</body>
+</html>
