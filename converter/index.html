@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>转换工具</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #f5f7fa;
+            position: relative;
+        }
+
+        .offline-card {
+            position: fixed;
+            top: 10px;
+            right: 15px;
+            width: 260px;
+            background: #fdfdfd7e;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 14px 16px;
+            font-size: 14px;
+            color: #333;
+            z-index: 9999;
+            line-height: 1.6;
+        }
+        .offline-card .close-btn {
+            position: absolute;
+            right: 12px;
+            top: 10px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #999;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .offline-card .close-btn:hover {
+            color: #333;
+            background: #f5f5f5;
+        }
+        .offline-card .title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 6px;
+        }
+        .offline-card .item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .offline-card .dot {
+            width: 4px;
+            height: 4px;
+            background: #3498db;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #34495e;
+        }
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .nav-item:hover {
+            background-color: #34495e;
+            padding-left: 30px;
+        }
+        .nav-item.active {
+            background-color: #3498db;
+            border-left: 4px solid #2980b9;
+        }
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        .page {
+            display: none;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            min-height: 80vh;
+        }
+        .page.active {
+            display: block;
+        }
+        .page h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 28px;
+        }
+        .page p {
+            color: #7f8c8d;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .upload-area {
+            border: 2px dashed #3498db;
+            padding: 40px;
+            border-radius: 10px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #f8f9fa;
+            text-align: center;
+        }
+        .upload-area:hover {
+            background: #eef5ff;
+        }
+        #fileInput, #audioFileInput {
+            display: none;
+        }
+        .crop-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+            gap: 12px;
+            font-size: 16px;
+            color: #2c3e50;
+        }
+        .switch-btn {
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .switch-btn::after {
+            content: '';
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: 0.3s;
+        }
+        .switch-btn.on {
+            background: #3498db;
+        }
+        .switch-btn.on::after {
+            left: 26px;
+        }
+        .img-crop-container {
+            display: none;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 900px;
+            height: 600px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #eee;
+        }
+        #cropImage {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .crop-btn {
+            padding: 10px 20px;
+            background: #e67e22;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+            display: none;
+        }
+        .crop-btn:hover {
+            background: #d35400;
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 400px;
+            margin: 20px auto;
+            border-radius: 8px;
+            display: none;
+            object-fit: contain;
+        }
+        .format-select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            margin: 10px;
+        }
+        .convert-btn, .download-btn {
+            padding: 12px 25px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: 0.3s;
+        }
+        .convert-btn:hover, .download-btn:hover {
+            background: #2980b9;
+        }
+        .download-btn {
+            background: #27ae60;
+            display: none;
+        }
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+        .pdf-preview-box {
+            padding: 20px;
+            font-size: 18px;
+            color: #3498db;
+            text-align: center;
+        }
+        .contact-tip {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 15px;
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        .contact-tip strong {
+            color: #3498db;
+        }
+		
+		.tito-link {
+			text-align: center;
+			margin: 30px 0;
+			cursor: pointer;
+		}
+		.tito-link .main-text {
+			font-size: 18px;
+			color: #3498db;
+			margin-bottom: 10px;
+		}
+		.tito-link .sub-text {
+			font-size: 14px;
+			color: #7f8c8d;
+		}
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .img-crop-container {
+                height: 400px;
+            }
+            .offline-card {
+                width: 220px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="offline-card" id="offlineCard">
+    <div class="close-btn" id="closeCard">×</div>
+    <div class="title">告示ovo</div>
+    <div class="item"><span class="dot"></span>无网络也能使用</div>
+    <div class="item"><span class="dot"></span>依靠电脑自身进行算法</div>
+    <div class="item"><span class="dot"></span>最近更新：1.裁剪区域适配网页取消最大400px 2.添加裁剪开关 </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
+<div class="sidebar">
+    <h2>转换工具</h2>
+    <div class="nav-item active" data-target="page1">图片转格式</div>
+    <div class="nav-item" data-target="page2">音频转格式</div>
+    <div class="nav-item" data-target="page3">音频解析</div>
+    <div class="nav-item" data-target="page4">视频解析</div>
+</div>
+<div class="content">
+    <div id="page1" class="page active">
+        <h1>图片转格式</h1>
+        <p>支持JPG、PNG、WebP、GIF、BMP、PDF图片格式互转，支持裁剪</p>
+        
+        <div class="crop-switch">
+            <span>裁剪功能：</span>
+            <div class="switch-btn" id="cropSwitch"></div>
+            <span id="cropStatus">关闭</span>
+        </div>
+        <div class="upload-area" id="uploadArea">
+            <p>点击或拖拽上传图片</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        <div class="img-crop-container" id="cropContainer">
+            <img id="cropImage" alt="裁剪图片">
+        </div>
+        <button id="cropBtn" class="crop-btn">确认裁剪</button>
+        <img id="previewImage" class="preview-img" alt="预览图">
+        
+        <div style="text-align:center; margin:20px 0;">
+            <select class="format-select" id="outputFormat">
+                <option value="jpg">JPG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+                <option value="gif">GIF</option>
+                <option value="bmp">BMP</option>
+                <option value="pdf">PDF</option>
+            </select>
+            <button class="convert-btn" id="convertBtn">开始转换</button>
+            <button class="download-btn" id="downloadBtn">下载转换后的文件</button>
+        </div>
+        <div class="result-box" id="resultBox">
+            <h3>转换完成</h3>
+            <img id="convertedImage" class="preview-img">
+            <div id="pdfPreview" class="pdf-preview-box"></div>
+        </div>
+        <div class="contact-tip">
+            面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong>
+        </div>
+    </div>
+    <div id="page2" class="page">
+        <h1>音频转格式</h1>
+        <p>支持MP3、WAV、OGG、M4A音频格式互转</p>
+        
+        <div class="upload-area" id="audioUploadArea">
+            <p>点击或拖拽上传音频</p>
+            <input type="file" id="audioFileInput" accept="audio/*">
+        </div>
+        <div id="audioInfo" style="text-align:center; margin:15px 0; display:none;">
+            <p id="audioFileName"></p>
+        </div>
+        
+        <div style="text-align:center;">
+            <select class="format-select" id="audioOutputFormat">
+                <option value="mp3">MP3</option>
+                <option value="wav">WAV</option>
+                <option value="ogg">OGG</option>
+                <option value="m4a">M4A</option>
+            </select>
+            <button class="convert-btn" id="audioConvertBtn">开始转换</button>
+            <button class="download-btn" id="audioDownloadBtn">下载转换音频</button>
+        </div>
+        <div class="result-box" id="audioResultBox">
+            <h3>音频转换完成</h3>
+        </div>
+        <div class="contact-tip">
+            面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong>
+        </div>
+    </div>
+    <div id="page3" class="page">
+        <h1>音频解析</h1>
+        <div class="tito-link" onclick="window.open('http://unlock.music.hi.cn/','_blank')">
+            <div class="main-text">点击前往unlock.music.hi.cn</div>
+            <div class="sub-text">本人不会太多html 暂时不会更好的音频解析 可前往unlock.music.hi.cn</div>
+        </div>
+        <div class="contact-tip">
+            面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong>
+        </div>
+    </div>
+    <div id="page4" class="page">
+        <h1>视频解析</h1>
+        <div class="tito-link" onclick="window.open('https://snapany.com/zh','_blank')">
+            <div class="main-text">点击前往snapany.com</div>
+            <div class="sub-text">本人不会太多html 暂时不会更好的视频解析 可前往snapany.com</div>
+        </div>
+        <div class="contact-tip">
+            面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('closeCard').onclick = function() {
+    document.getElementById('offlineCard').style.display = 'none';
+};
+
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+navItems.forEach(item => {
+    item.addEventListener('click', () => {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        const target = item.dataset.target;
+        pages.forEach(p => p.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+    });
+});
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const cropContainer = document.getElementById('cropContainer');
+const cropImage = document.getElementById('cropImage');
+const cropBtn = document.getElementById('cropBtn');
+const previewImage = document.getElementById('previewImage');
+const convertBtn = document.getElementById('convertBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const outputFormat = document.getElementById('outputFormat');
+const resultBox = document.getElementById('resultBox');
+const convertedImage = document.getElementById('convertedImage');
+const pdfPreview = document.getElementById('pdfPreview');
+const cropSwitch = document.getElementById('cropSwitch');
+const cropStatus = document.getElementById('cropStatus');
+let cropEnabled = false;
+let cropper;
+let croppedUrl = null;
+let originalFileUrl = null;
+let convertedUrl = null;
+let originalFileName = '';
+cropSwitch.onclick = () => {
+    cropEnabled = !cropEnabled;
+    cropSwitch.classList.toggle('on', cropEnabled);
+    cropStatus.textContent = cropEnabled ? '开启' : '关闭';
+    if (!cropEnabled) {
+        cropContainer.style.display = 'none';
+        cropBtn.style.display = 'none';
+        if (cropper) { cropper.destroy(); cropper = null; }
+        if (originalFileUrl) {
+            croppedUrl = originalFileUrl;
+            previewImage.src = croppedUrl;
+            previewImage.style.display = 'block';
+        }
+    } else {
+        if (originalFileUrl) {
+            cropContainer.style.display = 'block';
+            cropBtn.style.display = 'inline-block';
+            previewImage.style.display = 'none';
+            initCropper();
+        } else {
+            previewImage.style.display = 'none';
+        }
+    }
+};
+function initCropper() {
+    if (cropper) cropper.destroy();
+    cropImage.src = originalFileUrl;
+    cropImage.onload = function() {
+        cropper = new Cropper(cropImage, {
+            aspectRatio: NaN,
+            viewMode: 1,
+            autoCropArea: 0.9,
+            responsive: true,
+            autoCrop: true,
+            zoomable: true,
+            scalable: false
+        });
+    };
+}
+uploadArea.onclick = () => fileInput.click();
+fileInput.onchange = handleUpload;
+uploadArea.ondrop = e => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if(file && file.type.startsWith('image/')) {
+        fileInput.files = e.dataTransfer.files;
+        handleUpload({ target: { files: [file] } });
+    }
+};
+['dragenter', 'dragover', 'dragleave'].forEach(ev => {
+    uploadArea.addEventListener(ev, e => e.preventDefault());
+});
+function handleUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    originalFileName = file.name.replace(/\.\w+$/, '');
+    originalFileUrl = URL.createObjectURL(file);
+    if (!cropEnabled) {
+        croppedUrl = originalFileUrl;
+        previewImage.src = croppedUrl;
+        previewImage.style.display = 'block';
+        cropContainer.style.display = 'none';
+        cropBtn.style.display = 'none';
+        return;
+    }
+    cropContainer.style.display = 'block';
+    cropBtn.style.display = 'inline-block';
+    previewImage.style.display = 'none';
+    initCropper();
+}
+cropBtn.onclick = () => {
+    cropper.getCroppedCanvas({
+        maxWidth: 6000,
+        maxHeight: 6000
+    }).toBlob(blob => {
+        croppedUrl = URL.createObjectURL(blob);
+        previewImage.src = croppedUrl;
+        previewImage.style.display = 'block';
+        cropContainer.style.display = 'none';
+        cropBtn.style.display = 'none';
+    });
+};
+convertBtn.onclick = () => {
+    const useImgUrl = croppedUrl || originalFileUrl;
+    if (!useImgUrl) {
+        alert('请先上传图片！');
+        return;
+    }
+    resultBox.style.display = 'none';
+    convertedImage.style.display = 'none';
+    pdfPreview.innerText = '';
+    downloadBtn.style.display = 'none';
+    const fmt = outputFormat.value.toLowerCase();
+    if (fmt === 'pdf') {
+        const { jsPDF } = jspdf;
+        const img = new Image();
+        img.src = useImgUrl;
+        img.onload = () => {
+            const pdf = new jsPDF({
+                orientation: img.width > img.height ? 'landscape' : 'portrait',
+                unit: 'px',
+                format: [img.width, img.height]
+            });
+            pdf.addImage(img, 'PNG', 0, 0, img.width, img.height);
+            convertedUrl = pdf.output('bloburl');
+            resultBox.style.display = 'block';
+            pdfPreview.innerText = 'PDF文件已生成 由于PDF非图片 浏览器无法预览 请下载后自行查看';
+            downloadBtn.style.display = 'inline-block';
+        };
+    } else {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.src = useImgUrl;
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+            convertedUrl = canvas.toDataURL('image/' + fmt, 0.95);
+            convertedImage.src = convertedUrl;
+            convertedImage.style.display = 'block';
+            resultBox.style.display = 'block';
+            downloadBtn.style.display = 'inline-block';
+        };
+    }
+};
+downloadBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = convertedUrl;
+    a.download = `${originalFileName}-转换完成.${outputFormat.value}`;
+    a.click();
+};
+const audioUpload = document.getElementById('audioUploadArea');
+const audioFile = document.getElementById('audioFileInput');
+const audioConvertBtn = document.getElementById('audioConvertBtn');
+const audioDownloadBtn = document.getElementById('audioDownloadBtn');
+const audioFormat = document.getElementById('audioOutputFormat');
+const audioResultBox = document.getElementById('audioResultBox');
+const audioInfo = document.getElementById('audioInfo');
+const audioFileName = document.getElementById('audioFileName');
+let audioBlob = null;
+let audioUrl = null;
+let audioOriginalName = '';
+audioUpload.addEventListener('click', () => audioFile.click());
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    audioUpload.addEventListener(eventName, (e)=>{e.preventDefault();e.stopPropagation()}, false);
+});
+['dragenter', 'dragover'].forEach(eventName => {
+    audioUpload.addEventListener(eventName, () => audioUpload.style.background = "#e3f2fd");
+});
+['dragleave', 'drop'].forEach(eventName => {
+    audioUpload.addEventListener(eventName, () => audioUpload.style.background = "#f8f9fa");
+});
+audioUpload.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files[0];
+    if(file && file.type.startsWith('audio/')){
+        audioFile.files = e.dataTransfer.files;
+        handleAudio(file);
+    }else{
+        alert('请上传音频');
+    }
+});
+audioFile.addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(file) handleAudio(file);
+});
+function handleAudio(file){
+    audioBlob = file;
+    audioOriginalName = file.name.replace(/\.\w+$/, '');
+    audioFileName.innerText = `文件名：${file.name}`;
+    audioInfo.style.display = 'block';
+}
+audioConvertBtn.addEventListener('click', async () => {
+    if (!audioBlob) { alert('请先上传音频！'); return; }
+    try {
+        const ab = await audioBlob.arrayBuffer();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const buf = await ctx.decodeAudioData(ab);
+        const wav = audioBufferToWav(buf);
+        const blob = new Blob([wav], { type: 'audio/' + audioFormat.value });
+        audioUrl = URL.createObjectURL(blob);
+        audioResultBox.style.display = 'block';
+        audioDownloadBtn.style.display = 'inline-block';
+    } catch (e) {
+        alert('转换失败：' + e.message);
+    }
+});
+audioDownloadBtn.addEventListener('click', () => {
+    if (!audioUrl) return;
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    const name = `${audioOriginalName}-转换完成.${audioFormat.value}`;
+    a.download = name;
+    a.click();
+});
+function audioBufferToWav(buffer) {
+    let length = buffer.length * buffer.numberOfChannels * 2 + 44;
+    let ab = new ArrayBuffer(length);
+    let view = new DataView(ab);
+    let channels = [];
+    let offset = 0;
+    let pos = 0;
+    const set16 = (data) => { view.setUint16(pos, data, true); pos += 2; };
+    const set32 = (data) => { view.setUint32(pos, data, true); pos += 4; };
+    set32(0x46464952); set32(length - 8); set32(0x45564157);
+    set32(0x20746D66); set32(16); set16(1); set16(buffer.numberOfChannels);
+    set32(buffer.sampleRate); set32(buffer.sampleRate * 2 * buffer.numberOfChannels);
+    set16(buffer.numberOfChannels * 2); set16(16);
+    set32(0x61746164); set32(length - pos - 4);
+    for (let i = 0; i < buffer.numberOfChannels; i++)
+        channels.push(buffer.getChannelData(i));
+    while (pos < length) {
+        for (let i = 0; i < buffer.numberOfChannels; i++) {
+            let s = channels[i][offset];
+            s = Math.max(-1, Math.min(1, s));
+            view.setInt16(pos, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+            pos += 2;
+        }
+        offset++;
+    }
+    return ab;
+}
+</script>
+</body>
+</html>
