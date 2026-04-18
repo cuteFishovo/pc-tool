@@ -266,43 +266,22 @@
         .contact-tip strong {
             color: #3498db;
         }
-		
-		.tito-link {
-			text-align: center;
-			margin: 30px 0;
-			cursor: pointer;
-		}
-		.tito-link .main-text {
-			font-size: 18px;
-			color: #3498db;
-			margin-bottom: 10px;
-		}
-		.tito-link .sub-text {
-			font-size: 14px;
-			color: #7f8c8d;
-		}
 
-        .stitch-direction {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 15px 0;
-            gap: 20px;
-            font-size: 16px;
-            color: #2c3e50;
-        }
-        .direction-btn {
-            padding: 8px 20px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+        .tito-link {
+            text-align: center;
+            margin: 30px 0;
             cursor: pointer;
-            transition: all 0.3s;
         }
-        .direction-btn.active {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
+        .tito-link .main-text {
+            font-size: 18px;
+            color: #3498db;
+            margin-bottom: 10px;
         }
+        .tito-link .sub-text {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
         .stitch-preview-list {
             display: flex;
             flex-wrap: wrap;
@@ -349,6 +328,78 @@
             object-fit: contain;
         }
 
+        .layout-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .layout-option {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        .layout-option:hover {
+            border-color: #3498db;
+        }
+        .layout-option.active {
+            border-color: #3498db;
+            background: #e3f2fd;
+        }
+        .layout-preview {
+            width: 50px;
+            height: 50px;
+            display: grid;
+            gap: 2px;
+        }
+        .layout-preview div {
+            background: #2c3e50;
+            border-radius: 2px;
+        }
+
+        .resolution-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .res-input {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .fit-mode-group {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .fit-mode-btn {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #f8f9fa;
+        }
+        .fit-mode-btn.active {
+            background: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -363,10 +414,6 @@
                 width: 220px;
                 font-size: 13px;
             }
-            .stitch-direction {
-                flex-direction: column;
-                gap: 10px;
-            }
         }
     </style>
 </head>
@@ -377,7 +424,7 @@
     <div class="title">告示ovo</div>
     <div class="item"><span class="dot"></span>无网络也能使用</div>
     <div class="item"><span class="dot"></span>依靠电脑自身进行算法</div>
-    <div class="item"><span class="dot"></span>最近更新：添加图片拼接功能</div>
+    <div class="item"><span class="dot"></span>最近更新：增加图片拼接格式、自定义输出分辨率、拉伸/裁剪</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -474,12 +521,23 @@
 
     <div id="page5" class="page">
         <h1>图片拼接</h1>
-        <p>支持多张图片横向或纵向拼接，可选择输出格式</p>
-        <div class="stitch-direction">
-            <span>拼接方向：</span>
-            <div class="direction-btn active" data-direction="vertical">纵向拼接</div>
-            <div class="direction-btn" data-direction="horizontal">横向拼接</div>
+        <p>支持多张图片多种布局拼接，可自定义输出分辨率 拉伸/裁剪</p>
+        
+        <div class="resolution-inputs">
+            <input type="number" class="res-input" id="outWidth" placeholder="宽度" min="0">
+            <span>×</span>
+            <input type="number" class="res-input" id="outHeight" placeholder="高度" min="0">
         </div>
+
+        <div class="fit-mode-group" id="fitModeGroup">
+            <button class="fit-mode-btn" data-mode="stretch">拉伸</button>
+            <button class="fit-mode-btn" data-mode="cover">裁剪</button>
+        </div>
+
+        <div class="layout-selector" id="layoutSelector">
+            请先上传图片
+        </div>
+
         <div class="upload-area" id="stitchUploadArea">
             <p>点击或拖拽上传多张图片</p>
             <input type="file" id="stitchFileInput" accept="image/*" multiple>
@@ -723,155 +781,295 @@ function audioBufferToWav(b){
 const stitchUploadArea=document.getElementById('stitchUploadArea');
 const stitchFileInput=document.getElementById('stitchFileInput');
 const stitchPreviewList=document.getElementById('stitchPreviewList');
-const directionBtns=document.querySelectorAll('.direction-btn');
 const stitchBtn=document.getElementById('stitchBtn');
 const stitchDownloadBtn=document.getElementById('stitchDownloadBtn');
 const stitchOutputFormat=document.getElementById('stitchOutputFormat');
 const stitchResultBox=document.getElementById('stitchResultBox');
 const stitchedImage=document.getElementById('stitchedImage');
+const layoutSelector=document.getElementById('layoutSelector');
 
-let stitchDirection='vertical';
-let stitchImages=[];
-let stitchedUrl=null;
+const outWidthEl = document.getElementById('outWidth');
+const outHeightEl = document.getElementById('outHeight');
+const fitModeGroup = document.getElementById('fitModeGroup');
+const fitModeBtns = document.querySelectorAll('.fit-mode-btn');
 
-directionBtns.forEach(b=>{
-    b.onclick=()=>{
-        directionBtns.forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        stitchDirection=b.dataset.direction;
+let stitchImages = [];
+let stitchedUrl = null;
+let currentLayout = null;
+let fitMode = 'none';
+
+const layoutTemplates = {
+  1: [
+    { name: '单张', cols:1, rows:1, calc:()=>[{x:0,y:0,w:1,h:1}] }
+  ],
+  2: [
+    { name: '横向并排', cols:2, rows:1, calc:()=>[{x:0,y:0,w:0.5,h:1},{x:0.5,y:0,w:0.5,h:1}] },
+    { name: '纵向叠加', cols:1, rows:2, calc:()=>[{x:0,y:0,w:1,h:0.5},{x:0,y:0.5,w:1,h:0.5}] }
+  ],
+  3: [
+    { name: '三图横排', cols:3, rows:1, calc:()=>[{x:0,y:0,w:1/3,h:1},{x:1/3,y:0,w:1/3,h:1},{x:2/3,y:0,w:1/3,h:1}] },
+    { name: '三图竖排', cols:1, rows:3, calc:()=>[{x:0,y:0,w:1,h:1/3},{x:0,y:1/3,w:1,h:1/3},{x:0,y:2/3,w:1,h:1/3}] },
+    { name: '左一右二', cols:2, rows:2, calc:()=>[{x:0,y:0,w:0.5,h:1},{x:0.5,y:0,w:0.5,h:0.5},{x:0.5,y:0.5,w:0.5,h:0.5}] },
+    { name: '左二右一', cols:2, rows:2, calc:()=>[{x:0,y:0,w:0.5,h:0.5},{x:0,y:0.5,w:0.5,h:0.5},{x:0.5,y:0,w:0.5,h:1}] },
+    { name: '上一下二', cols:2, rows:2, calc:()=>[{x:0,y:0,w:1,h:0.5},{x:0,y:0.5,w:0.5,h:0.5},{x:0.5,y:0.5,w:0.5,h:0.5}] },
+    { name: '上二下一', cols:2, rows:2, calc:()=>[{x:0,y:0,w:0.5,h:0.5},{x:0.5,y:0,w:0.5,h:0.5},{x:0,y:0.5,w:1,h:0.5}] }
+  ],
+  4: [
+    { name: '四宫格', cols:2, rows:2, calc:()=>[{x:0,y:0,w:0.5,h:0.5},{x:0.5,y:0,w:0.5,h:0.5},{x:0,y:0.5,w:0.5,h:0.5},{x:0.5,y:0.5,w:0.5,h:0.5}] },
+    { name: '横向长图', cols:4, rows:1, calc:n=>Array(n).fill(0).map((_,k)=>({x:k/n,y:0,w:1/n,h:1})) },
+    { name: '竖向长图', cols:1, rows:4, calc:n=>Array(n).fill(0).map((_,k)=>({x:0,y:k/n,w:1,h:1/n})) }
+  ],
+  5: [
+    { name: '5图网格', cols:3, rows:2, calc:()=>[{x:0,y:0,w:1/3,h:1/2},{x:1/3,y:0,w:1/3,h:1/2},{x:2/3,y:0,w:1/3,h:1/2},{x:0,y:1/2,w:1/3,h:1/2},{x:1/3,y:1/2,w:1/3,h:1/2}] },
+    { name: '横向长图', cols:5, rows:1, calc:n=>Array(n).fill(0).map((_,k)=>({x:k/n,y:0,w:1/n,h:1})) },
+    { name: '竖向长图', cols:1, rows:5, calc:n=>Array(n).fill(0).map((_,k)=>({x:0,y:k/n,w:1,h:1/n})) }
+  ],
+  6: [
+    { name: '6图网格', cols:3, rows:2, calc:()=>[{x:0,y:0,w:1/3,h:1/2},{x:1/3,y:0,w:1/3,h:1/2},{x:2/3,y:0,w:1/3,h:1/2},{x:0,y:1/2,w:1/3,h:1/2},{x:1/3,y:1/2,w:1/3,h:1/2},{x:2/3,y:1/2,w:1/3,h:1/2}] },
+    { name: '横向长图', cols:6, rows:1, calc:n=>Array(n).fill(0).map((_,k)=>({x:k/n,y:0,w:1/n,h:1})) },
+    { name: '竖向长图', cols:1, rows:6, calc:n=>Array(n).fill(0).map((_,k)=>({x:0,y:k/n,w:1,h:1/n})) }
+  ],
+  7: [
+    { name: '7图网格', cols:3, rows:3, calc:()=>[{x:0,y:0,w:1/3,h:1/3},{x:1/3,y:0,w:1/3,h:1/3},{x:2/3,y:0,w:1/3,h:1/3},{x:0,y:1/3,w:1/3,h:1/3},{x:1/3,y:1/3,w:1/3,h:1/3},{x:0,y:2/3,w:1/3,h:1/3},{x:1/3,y:2/3,w:1/3,h:1/3}] },
+    { name: '横向长图', cols:7, rows:1, calc:n=>Array(n).fill(0).map((_,k)=>({x:k/n,y:0,w:1/n,h:1})) },
+    { name: '竖向长图', cols:1, rows:7, calc:n=>Array(n).fill(0).map((_,k)=>({x:0,y:k/n,w:1,h:1/n})) }
+  ],
+  8: [
+    { name: '8图网格', cols:4, rows:2, calc:()=>[{x:0,y:0,w:1/4,h:1/2},{x:1/4,y:0,w:1/4,h:1/2},{x:2/4,y:0,w:1/4,h:1/2},{x:3/4,y:0,w:1/4,h:1/2},{x:0,y:1/2,w:1/4,h:1/2},{x:1/4,y:1/2,w:1/4,h:1/2},{x:2/4,y:1/2,w:1/4,h:1/2},{x:3/4,y:1/2,w:1/4,h:1/2}] },
+    { name: '横向长图', cols:8, rows:1, calc:n=>Array(n).fill(0).map((_,k)=>({x:k/n,y:0,w:1/n,h:1})) },
+    { name: '竖向长图', cols:1, rows:8, calc:n=>Array(n).fill(0).map((_,k)=>({x:0,y:k/n,w:1,h:1/n})) }
+  ],
+  9: [
+    { name: '九宫格', cols:3, rows:3, calc:()=>[{x:0,y:0,w:1/3,h:1/3},{x:1/3,y:0,w:1/3,h:1/3},{x:2/3,y:0,w:1/3,h:1/3},{x:0,y:1/3,w:1/3,h:1/3},{x:1/3,y:1/3,w:1/3,h:1/3},{x:2/3,y:1/3,w:1/3,h:1/3},{x:0,y:2/3,w:1/3,h:1/3},{x:1/3,y:2/3,w:1/3,h:1/3},{x:2/3,y:2/3,w:1/3,h:1/3}] },
+    { name: '横向长图', cols:9, rows:1, calc:n=>Array(n).fill(0).map((_,k)=>({x:k/n,y:0,w:1/n,h:1})) },
+    { name: '竖向长图', cols:1, rows:9, calc:n=>Array(n).fill(0).map((_,k)=>({x:0,y:k/n,w:1,h:1/n})) }
+  ]
+};
+
+function renderLayouts() {
+  const count = stitchImages.length;
+  layoutSelector.innerHTML = '';
+  if (count < 1) {
+    layoutSelector.textContent = '请先上传图片';
+    currentLayout = null;
+    return;
+  }
+
+  const key = Math.min(count, 9);
+  const layouts = layoutTemplates[key] || layoutTemplates[4];
+
+  layouts.forEach((layout, idx) => {
+    const opt = document.createElement('div');
+    opt.className = 'layout-option ' + (idx === 0 ? 'active' : '');
+    
+    const prev = document.createElement('div');
+    prev.className = 'layout-preview';
+    prev.style.gridTemplateColumns = `repeat(${layout.cols}, 1fr)`;
+    prev.style.gridTemplateRows = `repeat(${layout.rows}, 1fr)`;
+
+    const showNum = count;
+    for (let i = 0; i < showNum; i++) {
+      const dot = document.createElement('div');
+      prev.appendChild(dot);
+    }
+
+    opt.appendChild(prev);
+    opt.onclick = () => {
+      document.querySelectorAll('.layout-option').forEach(e => e.classList.remove('active'));
+      opt.classList.add('active');
+      currentLayout = layout;
     };
+    layoutSelector.appendChild(opt);
+  });
+
+  currentLayout = layouts[0];
+}
+
+function updateFitModeGroup() {
+  const w = parseInt(outWidthEl.value) || 0;
+  const h = parseInt(outHeightEl.value) || 0;
+  fitModeGroup.style.display = (w > 0 && h > 0) ? 'flex' : 'none';
+}
+outWidthEl.addEventListener('input', updateFitModeGroup);
+outHeightEl.addEventListener('input', updateFitModeGroup);
+
+fitModeBtns.forEach(btn => {
+  btn.onclick = () => {
+    const mode = btn.dataset.mode;
+    if (fitMode === mode) {
+      fitMode = 'none';
+      btn.classList.remove('active');
+    } else {
+      fitMode = mode;
+      fitModeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  };
 });
 
-stitchUploadArea.onclick=()=>{
-    stitchFileInput.value = '';
-    stitchFileInput.click();
+stitchUploadArea.onclick = () => {
+  stitchFileInput.value = '';
+  stitchFileInput.click();
 };
-
-['dragenter','dragover','dragleave','drop'].forEach(e=>{
-    stitchUploadArea.addEventListener(e,ev=>{ev.preventDefault();ev.stopPropagation()});
+['dragenter','dragover','dragleave','drop'].forEach(e => {
+  stitchUploadArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
 });
-['dragenter','dragover'].forEach(e=>stitchUploadArea.addEventListener(e,()=>stitchUploadArea.style.background='#e3f2fd'));
-['dragleave','drop'].forEach(e=>stitchUploadArea.addEventListener(e,()=>stitchUploadArea.style.background='#f8f9fa'));
-
-stitchUploadArea.ondrop=(e)=>{
-    const fs=Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/'));
-    if(fs.length>0) handleStitchFiles(fs);
-    else alert('请上传图片');
+stitchUploadArea.ondrop = e => {
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (files.length) addStitchImages(files);
 };
-stitchFileInput.onchange=(e)=>handleStitchFiles(Array.from(e.target.files));
+stitchFileInput.onchange = e => addStitchImages(Array.from(e.target.files));
 
-function handleStitchFiles(fs){
-    fs.forEach(f=>{
-        if(!f.type.startsWith('image/')) return;
-        const r=new FileReader();
-        r.onload=(e)=>{
-            stitchImages.push({
-                id:Date.now()+Math.random(),
-                name:f.name,
-                url:e.target.result
-            });
-            updateStitchPreview();
-        };
-        r.readAsDataURL(f);
-    });
+function addStitchImages(files) {
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      stitchImages.push({ id:Math.random(), url:e.target.result });
+      updatePreview();
+      renderLayouts();
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
-function updateStitchPreview(){
-    if(stitchImages.length===0){
-        stitchPreviewList.innerHTML='<p style="width:100%;text-align:center;color:#7f8c8d">暂无上传的图片</p>';
-        return;
+function updatePreview() {
+  if (stitchImages.length === 0) {
+    stitchPreviewList.innerHTML = '<p style="width:100%;text-align:center;color:#888">暂无图片</p>';
+    return;
+  }
+  stitchPreviewList.innerHTML = '';
+  stitchImages.forEach(img => {
+    const item = document.createElement('div');
+    item.className = 'stitch-preview-item';
+    item.innerHTML = `<img src="${img.url}"><div class="remove-btn" data-id="${img.id}">×</div>`;
+    stitchPreviewList.appendChild(item);
+  });
+}
+
+stitchPreviewList.onclick = e => {
+  if (e.target.classList.contains('remove-btn')) {
+    const id = parseFloat(e.target.dataset.id);
+    stitchImages = stitchImages.filter(i => i.id !== id);
+    updatePreview();
+    renderLayouts();
+  }
+};
+
+stitchBtn.onclick = async () => {
+  if (stitchImages.length < 1) return alert('至少上传1张图片');
+  if (!currentLayout) return alert('请选择布局');
+
+  stitchResultBox.style.display = 'none';
+  stitchedImage.style.display = 'none';
+  stitchDownloadBtn.style.display = 'none';
+
+  try {
+    const imgs = await Promise.all(stitchImages.map(i => loadImg(i.url)));
+    const n = imgs.length;
+    const cells = currentLayout.calc(n);
+    const targetW = parseInt(outWidthEl.value) || 0;
+    const targetH = parseInt(outHeightEl.value) || 0;
+    const useCustom = targetW > 0 && targetH > 0;
+
+    const canvas = document.createElement('canvas');
+    const maxW = Math.max(...imgs.map(i => i.width));
+    const maxH = Math.max(...imgs.map(i => i.height));
+
+    if (useCustom) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    } else {
+      if (layoutIsHorizontal(currentLayout)) {
+        canvas.width = imgs.reduce((s, i) => s + i.width, 0);
+        canvas.height = maxH;
+      } else if (layoutIsVertical(currentLayout)) {
+        canvas.width = maxW;
+        canvas.height = imgs.reduce((s, i) => s + i.height, 0);
+      } else {
+        canvas.width = maxW * 3;
+        canvas.height = maxH * 3;
+      }
     }
-    stitchPreviewList.innerHTML='';
-    stitchImages.forEach(img=>{
-        const d=document.createElement('div');
-        d.className='stitch-preview-item';
-        d.innerHTML=`<img src="${img.url}" alt=""><div class="remove-btn" data-id="${img.id}">×</div>`;
-        stitchPreviewList.appendChild(d);
-    });
-}
 
-stitchPreviewList.onclick=(e)=>{
-    if(e.target.classList.contains('remove-btn')){
-        const id=parseFloat(e.target.dataset.id);
-        stitchImages=stitchImages.filter(i=>i.id!==id);
-        updateStitchPreview();
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const CW = canvas.width, CH = canvas.height;
+
+    imgs.forEach((img, i) => {
+      const cell = cells[i];
+      const x = cell.x * CW;
+      const y = cell.y * CH;
+      const w = cell.w * CW;
+      const h = cell.h * CH;
+
+      if (fitMode === 'stretch') {
+        ctx.drawImage(img, x, y, w, h);
+      } else if (fitMode === 'cover') {
+        const ratio = Math.max(w / img.width, h / img.height);
+        const iw = img.width * ratio;
+        const ih = img.height * ratio;
+        const ix = x + (w - iw) / 2;
+        const iy = y + (h - ih) / 2;
+        ctx.drawImage(img, ix, iy, iw, ih);
+      } else {
+        const ratio = Math.min(w / img.width, h / img.height);
+        const iw = img.width * ratio;
+        const ih = img.height * ratio;
+        const ix = x + (w - iw) / 2;
+        const iy = y + (h - ih) / 2;
+        ctx.drawImage(img, ix, iy, iw, ih);
+      }
+    });
+
+    const fmt = stitchOutputFormat.value.toLowerCase();
+    if (fmt === 'pdf') {
+      const { jsPDF } = jspdf;
+      const pdf = new jsPDF({
+        orientation: CW > CH ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [CW, CH]
+      });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, CW, CH);
+      stitchedUrl = pdf.output('bloburl');
+      stitchResultBox.innerHTML = '<h3>PDF 拼接完成</h3><p>请下载查看</p>';
+    } else {
+      stitchedUrl = canvas.toDataURL('image/' + fmt, 0.95);
+      stitchedImage.src = stitchedUrl;
+      stitchedImage.style.display = 'block';
     }
+    stitchResultBox.style.display = 'block';
+    stitchDownloadBtn.style.display = 'inline-block';
+  } catch (e) {
+    alert('拼接失败：' + e.message);
+  }
 };
 
-stitchBtn.onclick=async()=>{
-    if(stitchImages.length<2){alert('至少上传2张图片');return;}
-    stitchResultBox.style.display='none';
-    stitchedImage.style.display='none';
-    stitchDownloadBtn.style.display='none';
-    stitchResultBox.innerHTML='<h3>拼接完成</h3><img id="stitchedImage" class="stitch-result-img">';
-
-    try{
-        const imgs=await Promise.all(stitchImages.map(i=>loadImage(i.url)));
-        let w,h;
-        if(stitchDirection==='vertical'){
-            w=Math.max(...imgs.map(x=>x.width));
-            h=imgs.reduce((s,x)=>s+x.height,0);
-        }else{
-            w=imgs.reduce((s,x)=>s+x.width,0);
-            h=Math.max(...imgs.map(x=>x.height));
-        }
-        const c=document.createElement('canvas');
-        c.width=w; c.height=h;
-        const ctx=c.getContext('2d');
-        let x=0,y=0;
-        imgs.forEach(img=>{
-            if(stitchDirection==='vertical'){
-                const ox=(w-img.width)/2;
-                ctx.drawImage(img,ox,y,img.width,img.height);
-                y+=img.height;
-            }else{
-                const oy=(h-img.height)/2;
-                ctx.drawImage(img,x,oy,img.width,img.height);
-                x+=img.width;
-            }
-        });
-
-        const fmt=stitchOutputFormat.value.toLowerCase();
-        if(fmt==='pdf'){
-            const {jsPDF}=jspdf;
-            const pdf=new jsPDF({
-                orientation:w>h?'landscape':'portrait',
-                unit:'px',
-                format:[w,h]
-            });
-            pdf.addImage(c.toDataURL('image/png'),'PNG',0,0,w,h);
-            stitchedUrl=pdf.output('bloburl');
-            stitchResultBox.style.display='block';
-            stitchedImage.style.display='none';
-            stitchResultBox.innerHTML='<h3>拼接完成（PDF）</h3><p>无法预览，请下载查看</p>';
-        }else{
-            stitchedUrl=c.toDataURL('image/'+fmt,0.95);
-            const imgEl = document.getElementById('stitchedImage');
-            imgEl.src = stitchedUrl;
-            imgEl.style.display='block';
-            stitchResultBox.style.display='block';
-        }
-        stitchDownloadBtn.style.display='inline-block';
-    }catch(e){alert('拼接失败：'+e.message)}
-};
-
-stitchDownloadBtn.onclick=()=>{
-    if(!stitchedUrl) return;
-    const a=document.createElement('a');
-    a.href=stitchedUrl;
-    a.download=`拼接后图片.${stitchOutputFormat.value}`;
-    a.click();
-};
-
-function loadImage(url){
-    return new Promise((r,j)=>{
-        const i=new Image();
-        i.crossOrigin='';
-        i.onload=()=>r(i);
-        i.onerror=j;
-        i.src=url;
-    });
+function layoutIsHorizontal(layout){
+  return layout.rows === 1;
 }
+function layoutIsVertical(layout){
+  return layout.cols === 1;
+}
+
+stitchDownloadBtn.onclick = () => {
+  const a = document.createElement('a');
+  a.href = stitchedUrl;
+  a.download = '拼接结果.' + stitchOutputFormat.value;
+  a.click();
+};
+
+function loadImg(url) {
+  return new Promise((res, rej) => {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = rej;
+    i.src = url;
+  });
+}
+
+renderLayouts();
+updateFitModeGroup();
 </script>
 </body>
 </html>
