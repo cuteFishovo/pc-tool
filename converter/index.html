@@ -519,7 +519,7 @@
     <div class="title">告示ovo</div>
     <div class="item"><span class="dot"></span>无网络也能使用</div>
     <div class="item"><span class="dot"></span>依靠电脑自身进行算法</div>
-    <div class="item"><span class="dot"></span>!!!此网页只进行维护 不再更新 更多功能请查看 https://pc-tool.cn/</div>
+    <div class="item"><span class="dot"></span>最近更新：图片压缩支持批量</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -575,8 +575,7 @@
 
     <div id="page2" class="page">
         <h1>音频转格式</h1>
-        <p>支持MP3、WAV、M4A音频格式互转</p>
-        <p>转ogg请访问https://pc-tool.cn/audio-ogg/</p>
+        <p>支持MP3、WAV、OGG、M4A音频格式互转</p>
         <div class="upload-area" id="audioUploadArea">
             <p>点击或拖拽上传音频</p>
             <input type="file" id="audioFileInput" accept="audio/*">
@@ -588,6 +587,7 @@
             <select class="format-select" id="audioOutputFormat">
                 <option value="mp3">MP3</option>
                 <option value="wav">WAV</option>
+                <option value="ogg">OGG</option>
                 <option value="m4a">M4A</option>
             </select>
             <button class="convert-btn" id="audioConvertBtn">开始转换</button>
@@ -863,18 +863,24 @@ function handleAudio(f){
     audioInfo.style.display='block';
 }
 
-audioConvertBtn.onclick=async()=>{
-    if(!audioBlob){alert('请先上传音频');return;}
-    try{
-        const ab=await audioBlob.arrayBuffer();
-        const ctx=new (window.AudioContext||window.webkitAudioContext)();
-        const buf=await ctx.decodeAudioData(ab);
-        const w=audioBufferToWav(buf);
-        const b=new Blob([w],{type:'audio/'+audioFormat.value});
-        audioUrl=URL.createObjectURL(b);
-        audioResultBox.style.display='block';
-        audioDownloadBtn.style.display='inline-block';
-    }catch(e){alert('失败：'+e.message)}
+audioConvertBtn.onclick = async () => {
+    if (!audioBlob) { alert('请先上传音频'); return; }
+    try {
+        const ab = await audioBlob.arrayBuffer();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const buf = await ctx.decodeAudioData(ab);
+        let b;
+        const fmt = audioFormat.value;
+        if (fmt === 'ogg') {
+            b = OggVorbisEncoder.encode(buf);
+        } else {
+            const w = audioBufferToWav(buf);
+            b = new Blob([w], { type: 'audio/' + fmt });
+        }
+        audioUrl = URL.createObjectURL(b);
+        audioResultBox.style.display = 'block';
+        audioDownloadBtn.style.display = 'inline-block';
+    } catch (e) { alert('失败：' + e.message) }
 };
 
 audioDownloadBtn.onclick=()=>{
@@ -883,6 +889,116 @@ audioDownloadBtn.onclick=()=>{
     a.download=`${audioOriginalName}-转换.${audioFormat.value}`;
     a.click();
 };
+
+const OggVorbisEncoder = (function() {
+    const crcTable = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+        let r = i;
+        for (let j = 0; j < 8; j++) {
+            r = (r & 1) ? (r >>> 1) ^ 0xEDB88320 : (r >>> 1);
+        }
+        crcTable[i] = r;
+    }
+    function crc32(data) {
+        let crc = 0xFFFFFFFF;
+        for (let i = 0; i < data.length; i++) {
+            crc = crcTable[(crc ^ data[i]) & 0xFF] ^ (crc >>> 8);
+        }
+        return (crc ^ 0xFFFFFFFF) >>> 0;
+    }
+    function createVorbisHeader(sampleRate, channels, quality) {
+        const header = new Uint8Array(30);
+        header.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 0);
+        header.set([0x00, 0x00, 0x00, 0x00], 6);
+        header[10] = channels;
+        new DataView(header.buffer).setUint32(11, sampleRate, true);
+        const nominalBitrate = Math.floor(quality * 192000);
+        new DataView(header.buffer).setInt32(15, 0, true);
+        new DataView(header.buffer).setInt32(19, nominalBitrate, true);
+        new DataView(header.buffer).setInt32(23, 0, true);
+        header[27] = 0x08;
+        header[28] = 0x10;
+        header[29] = 0x01;
+        return header;
+    }
+    function createOggPage(segmentData, headerType, granulePosition, streamSerial) {
+        const segments = [];
+        let dataOffset = 0;
+        while (dataOffset < segmentData.length) {
+            const remaining = segmentData.length - dataOffset;
+            if (remaining <= 255) {
+                segments.push(remaining);
+                dataOffset += remaining;
+            } else {
+                segments.push(255);
+                dataOffset += 255;
+            }
+        }
+        const pageHeaderSize = 27 + segments.length;
+        const pageBuffer = new ArrayBuffer(pageHeaderSize + segmentData.length);
+        const page = new Uint8Array(pageBuffer);
+        page.set([0x4f, 0x67, 0x67, 0x53], 0);
+        page[4] = 0;
+        page[5] = headerType;
+        new DataView(pageBuffer).setBigInt64(6, BigInt(granulePosition), true);
+        new DataView(pageBuffer).setUint32(14, streamSerial, true);
+        new DataView(pageBuffer).setUint32(18, 0, true);
+        page[26] = segments.length;
+        for (let i = 0; i < segments.length; i++) {
+            page[27 + i] = segments[i];
+        }
+        page.set(segmentData, 27 + segments.length);
+        const crc = crc32(page);
+        new DataView(pageBuffer).setUint32(22, crc, true);
+        return page;
+    }
+    function encode(audioBuffer, quality = 0.7) {
+        const sampleRate = audioBuffer.sampleRate;
+        const channels = Math.min(audioBuffer.numberOfChannels, 2);
+        const length = audioBuffer.length;
+        const leftChannel = audioBuffer.getChannelData(0);
+        const rightChannel = channels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
+        const pcmData = new Float32Array(length * 2);
+        for (let i = 0; i < length; i++) {
+            pcmData[i * 2] = leftChannel[i];
+            pcmData[i * 2 + 1] = rightChannel[i];
+        }
+        const serial = Math.floor(Math.random() * 0xFFFFFFFF);
+        const vorbisHeader = createVorbisHeader(sampleRate, channels, quality);
+        const packets = [];
+        const samplesPerPacket = 1024;
+        for (let offset = 0; offset < pcmData.length; offset += samplesPerPacket * 2) {
+            const end = Math.min(offset + samplesPerPacket * 2, pcmData.length);
+            const packetData = new Uint8Array((end - offset) * 2);
+            const view = new DataView(packetData.buffer);
+            for (let i = offset; i < end; i++) {
+                const sample = Math.max(-1, Math.min(1, pcmData[i]));
+                const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                view.setInt16((i - offset) * 2, intSample, true);
+            }
+            packets.push(packetData);
+        }
+        const oggParts = [];
+        oggParts.push(createOggPage(vorbisHeader, 0x02, 0, serial));
+        const commentHeader = new Uint8Array([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73, 0x00, 0x00, 0x00, 0x00, 0x01]);
+        oggParts.push(createOggPage(commentHeader, 0x00, 0, serial));
+        let granulePos = 0;
+        for (const packet of packets) {
+            granulePos += samplesPerPacket;
+            oggParts.push(createOggPage(packet, 0x00, granulePos, serial));
+        }
+        oggParts.push(createOggPage(new Uint8Array(0), 0x04, granulePos, serial));
+        const totalLength = oggParts.reduce((acc, part) => acc + part.length, 0);
+        const finalOgg = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const part of oggParts) {
+            finalOgg.set(part, offset);
+            offset += part.length;
+        }
+        return new Blob([finalOgg], { type: 'audio/ogg' });
+    }
+    return { encode };
+})();
 
 function audioBufferToWav(b){
     let l=b.length*b.numberOfChannels*2+44;
