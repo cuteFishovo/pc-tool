@@ -272,7 +272,7 @@
         <div class="form-group">
             <label for="bilibili-url">输入B站视频链接：</label>
             <div class="input-wrapper">
-                <input type="text" id="bilibili-url" placeholder="例如：https://www.bilibili.com/video/BV*******/...">
+                <input type="text" id="bilibili-url" placeholder="例如：https://www.bilibili.com/video/BV******/?p=2">
                 <button class="paste-btn" id="paste-url-btn">粘贴</button>
             </div>
         </div>
@@ -324,18 +324,25 @@
             }
             
             const bvPattern = /BV[a-zA-Z0-9]{10}/;
-            const match = url.match(bvPattern);
+            const matchBv = url.match(bvPattern);
             
-            if (match) {
-                const bvCode = match[0];
-                const finalUrl = prefix + bvCode;
-                
-                resultText.textContent = finalUrl;
-                resultArea.style.display = 'block';
-            } else {
+            if (!matchBv) {
                 errorMsg.textContent = '未能从链接中提取到BV码，请检查链接是否正确！';
                 errorMsg.style.display = 'block';
+                return;
             }
+            const bvCode = matchBv[0];
+            let finalUrl = prefix + bvCode;
+
+            // 匹配 p=数字
+            const pPattern = /p=(\d+)/;
+            const matchP = url.match(pPattern);
+            if (matchP) {
+                finalUrl += '&p=' + matchP[1];
+            }
+            
+            resultText.textContent = finalUrl;
+            resultArea.style.display = 'block';
         });
         
         copyBtn.addEventListener('click', async function() {
