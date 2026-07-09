@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频压缩</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #09090b;
+            color: #f4f4f5;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            background-image: linear-gradient(to bottom left, #242323, #131314, #000000);
+            background-attachment: fixed;
+            position: relative;
+            padding: 20px;
+        }
+
+        .bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(2px);
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        @keyframes fadeUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 24px;
+            font-size: 15px;
+            color: #a1a1aa;
+            transition: color 0.3s;
+            z-index: 10;
+        }
+
+        .back-link:hover { color: #e4e4e7; }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(24, 24, 27, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 16px;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .container h1 {
+            color: #e4e4e7;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .container > p {
+            color: #a1a1aa;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 10px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.02);
+            text-align: center;
+            color: #a1a1aa;
+            position: relative;
+            overflow: hidden;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .upload-area.has-file {
+            border-style: solid;
+            border-color: rgba(129, 140, 248, 0.3);
+            background: rgba(129, 140, 248, 0.05);
+            padding: 20px;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            opacity: 0.5;
+        }
+
+        .upload-area.has-file .upload-icon { display: none; }
+        .upload-area.has-file .upload-text { display: none; }
+
+        #videoFileInput { display: none; }
+
+        .video-preview {
+            display: none;
+            width: 100%;
+            max-height: 260px;
+            border-radius: 8px;
+            margin-top: 10px;
+            background: #000;
+            object-fit: contain;
+        }
+
+        .upload-area.has-file .video-preview { display: block; }
+
+        .file-info {
+            display: none;
+            width: 100%;
+            text-align: left;
+            margin-top: 8px;
+        }
+
+        .upload-area.has-file .file-info { display: block; }
+
+        .file-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #a1a1aa;
+            padding: 3px 0;
+        }
+
+        .file-info-row span:last-child { color: #d4d4d8; }
+
+        .settings-area {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .setting-label {
+            font-size: 14px;
+            color: #a1a1aa;
+            min-width: 80px;
+        }
+
+        .setting-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .format-select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+            cursor: pointer;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1.2rem;
+            padding-right: 2.2rem;
+            transition: border-color 0.3s;
+        }
+
+        .format-select:focus { outline: none; border-color: rgba(129, 140, 248, 0.5); }
+
+        .quality-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            max-width: 180px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .quality-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #818cf8;
+            cursor: pointer;
+            border: 2px solid rgba(0,0,0,0.3);
+            transition: transform 0.15s;
+        }
+
+        .quality-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+        .quality-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .quality-badge.high   { background: rgba(39, 174, 96, 0.2);  color: #4ade80; }
+        .quality-badge.medium { background: rgba(251, 146, 60, 0.2); color: #fb923c; }
+        .quality-badge.low    { background: rgba(239, 68, 68, 0.2);  color: #f87171; }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .convert-btn, .download-btn, .reset-btn {
+            padding: 12px 28px;
+            background: rgba(24, 24, 27, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .convert-btn:hover, .download-btn:hover, .reset-btn:hover {
+            background: rgba(39, 39, 42, 0.6);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .convert-btn:active, .download-btn:active, .reset-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .convert-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .convert-btn.compressing {
+            background: rgba(129, 140, 248, 0.2);
+            border-color: rgba(129, 140, 248, 0.3);
+        }
+
+        .download-btn {
+            background: rgba(39, 174, 96, 0.3);
+            border-color: rgba(39, 174, 96, 0.3);
+            display: none;
+        }
+
+        .download-btn:hover {
+            background: rgba(39, 174, 96, 0.5);
+            border-color: rgba(39, 174, 96, 0.5);
+        }
+
+        .download-btn.visible { display: inline-block; }
+
+        .progress-wrap {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-wrap.active { display: block; }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #818cf8, #a78bfa, #c084fc);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: #a1a1aa;
+            text-align: center;
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        .result-box .result-title {
+            color: #4ade80;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .result-compare {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .result-item {
+            text-align: center;
+        }
+
+        .result-item .size {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e4e4e7;
+        }
+
+        .result-item .label {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 2px;
+        }
+
+        .result-saving {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding: 6px 14px;
+            background: rgba(39, 174, 96, 0.15);
+            border-radius: 20px;
+            font-size: 14px;
+            color: #4ade80;
+        }
+
+        .contact-tip {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 15px;
+            color: #71717a;
+            line-height: 1.6;
+        }
+
+        .contact-tip strong { color: #818cf8; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse { animation: pulse 1.5s ease-in-out infinite; }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #818cf8;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas" class="bg-canvas"></canvas>
+
+    <a href="../../index.html" class="back-link">&larr; 返回转换工具首页</a>
+
+    <div class="container">
+        <h1>视频压缩</h1>
+        <p>支持MP4、WebM、MOV、AVI格式视频压缩，可调节画质与分辨率（浏览器原生编码，无需下载任何依赖）</p>
+
+        <div class="upload-area" id="videoUploadArea">
+            <p class="upload-text">点击或拖拽上传视频文件</p>
+            <input type="file" id="videoFileInput" accept="video/*">
+            <video class="video-preview" id="videoPreview" controls preload="metadata"></video>
+            <div class="file-info" id="fileInfo">
+                <div class="file-info-row"><span>文件名</span><span id="infoName">-</span></div>
+                <div class="file-info-row"><span>原始大小</span><span id="infoSize">-</span></div>
+                <div class="file-info-row"><span>分辨率</span><span id="infoRes">-</span></div>
+                <div class="file-info-row"><span>时长</span><span id="infoDuration">-</span></div>
+                <div class="file-info-row"><span>音频</span><span id="infoAudio">-</span></div>
+            </div>
+        </div>
+
+        <div class="settings-area">
+            <div class="setting-row">
+                <span class="setting-label">输出格式</span>
+                <div class="setting-right">
+                    <select class="format-select" id="videoOutputFormat">
+                        <option value="mp4">MP4 (H.264)</option>
+                        <option value="webm">WebM (VP9)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">压缩画质</span>
+                <div class="setting-right">
+                    <input type="range" class="quality-slider" id="qualitySlider" min="1" max="3" value="2" step="1">
+                    <span class="quality-badge medium" id="qualityBadge">中等</span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">输出分辨率</span>
+                <div class="setting-right">
+                    <select class="format-select" id="resolutionSelect">
+                        <option value="original" selected>保持原始</option>
+                        <option value="2160">4K (2160p)</option>
+                        <option value="1440">2K (1440p)</option>
+                        <option value="1080">1080p</option>
+                        <option value="720">720p</option>
+                        <option value="480">480p</option>
+                        <option value="360">360p</option>
+                        <option value="240">240p</option>
+                        <option value="144">144p</option>
+                    </select>
+                </div>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">音频质量</span>
+                <div class="setting-right">
+                    <select class="format-select" id="audioQualitySelect">
+                        <option value="0" selected>保持原始</option>
+                        <option value="1">低 (64kbps)</option>
+                        <option value="2">中 (128kbps)</option>
+                        <option value="3">高 (192kbps)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="convert-btn" id="videoCompressBtn" disabled>开始压缩</button>
+            <button class="download-btn" id="videoDownloadBtn">下载压缩视频</button>
+            <button class="reset-btn" id="videoResetBtn" style="display:none;">重新上传</button>
+        </div>
+
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+            <p class="progress-text" id="progressText">准备中...</p>
+        </div>
+
+        <div class="result-box" id="videoResultBox">
+            <div class="result-title">&#x2705; 压缩完成！</div>
+            <div class="result-compare">
+                <div class="result-item">
+                    <div class="size" id="resultOriginal">-</div>
+                    <div class="label">原始大小</div>
+                </div>
+                <div class="result-item" style="align-self:center;color:#71717a;font-size:20px;">&rarr;</div>
+                <div class="result-item">
+                    <div class="size" id="resultCompressed" style="color:#4ade80;">-</div>
+                    <div class="label">压缩后大小</div>
+                </div>
+            </div>
+            <div class="result-saving" id="resultSaving"></div>
+        </div>
+
+        <div class="contact-tip">面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong></div>
+    </div>
+
+    <!-- 增强粒子背景 -->
+    <script>
+        (function () {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, mouseX = -9999, mouseY = -9999;
+
+            function resize() {
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = W;
+                canvas.height = H;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            document.addEventListener('mousemove', function (e) { mouseX = e.clientX; mouseY = e.clientY; });
+            document.addEventListener('mouseleave', function () { mouseX = -9999; mouseY = -9999; });
+
+            var GS = 8, PS = 6;
+            var WORM_COUNT = Math.floor((W * H) / 15000);
+            var DUST_COUNT = Math.floor((W * H) / 7000);
+
+            var PALETTE = [
+                'rgba(16, 185, 129, ',
+                'rgba(6, 182, 212, ',
+                'rgba(168, 85, 247, ',
+                'rgba(251, 146, 60, ',
+                'rgba(236, 72, 153, ',
+                'rgba(52, 211, 153, ',
+                'rgba(129, 140, 248, ',
+                'rgba(250, 204, 21, ',
+            ];
+
+            function rpick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+            var Worm = (function () {
+                function W() { this.init(true); }
+                W.prototype.init = function (pre) {
+                    this.x = Math.random() * (W / GS);
+                    this.y = Math.random() * (H / GS);
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = Math.random() * 0.1 + 0.03;
+                    this.history = [];
+                    this.maxLen = Math.floor(Math.random() * 65 + 20);
+                    this.turn = (Math.random() - 0.5) * 0.035;
+                    this.color = rpick(PALETTE);
+                    this.glowColor = this.color.replace(')', '').replace('rgba', 'rgba');
+                    if (pre) { var n = Math.floor(Math.random() * this.maxLen); for (var i = 0; i < n; i++) this.update(true); }
+                };
+                W.prototype.update = function (isInit) {
+                    var fa = Math.sin(this.x * 0.035) * Math.cos(this.y * 0.035) * Math.PI * 2;
+                    var dx = mouseX / GS - this.x, dy = mouseY / GS - this.y;
+                    var d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 35 && d > 0) fa += Math.atan2(dy, dx) * (1 - d / 35) * 0.025;
+                    this.angle += (fa - this.angle) * 0.018 + this.turn;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed;
+                    var gx = Math.floor(this.x), gy = Math.floor(this.y);
+                    if (this.history.length === 0 || this.history[this.history.length - 1].x !== gx || this.history[this.history.length - 1].y !== gy) {
+                        this.history.push({ x: gx, y: gy });
+                        if (this.history.length > this.maxLen) this.history.shift();
+                    }
+                    if (!isInit && (this.x < -15 || this.x > (W / GS) + 15 || this.y < -15 || this.y > (H / GS) + 15)) this.init();
+                };
+                W.prototype.draw = function (ctx) {
+                    if (this.history.length < 2) return;
+                    for (var i = 0; i < this.history.length; i++) {
+                        var pos = this.history[i], px = pos.x * GS, py = pos.y * GS;
+                        var alpha = 1, prog = i / this.history.length;
+                        if (prog > 0.8) alpha = (1 - prog) * 5;
+                        else if (prog < 0.2) alpha = prog * 5;
+                        if (i === this.history.length - 1) { ctx.shadowColor = this.glowColor + '0.5)'; ctx.shadowBlur = 5; }
+                        if (Math.random() > 0.96) alpha *= 0.15;
+                        ctx.fillStyle = this.color + alpha + ')';
+                        ctx.fillRect(px, py, PS, PS);
+                        ctx.shadowBlur = 0;
+                    }
+                };
+                return W;
+            })();
+
+            var Dust = (function () {
+                function D() {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.r = Math.random() * 2.2 + 0.8;
+                    this.vx = (Math.random() - 0.5) * 0.25;
+                    this.vy = (Math.random() - 0.5) * 0.25;
+                    this.alpha = Math.random() * 0.45 + 0.15;
+                    this.da = (Math.random() - 0.5) * 0.004;
+                    this.color = rpick(PALETTE);
+                }
+                D.prototype.update = function () {
+                    this.x += this.vx; this.y += this.vy;
+                    this.alpha += this.da;
+                    if (this.alpha > 0.65 || this.alpha < 0.04) this.da *= -1;
+                    if (this.x < -10) this.x = W + 10; if (this.x > W + 10) this.x = -10;
+                    if (this.y < -10) this.y = H + 10; if (this.y > H + 10) this.y = -10;
+                    var dx = this.x - mouseX, dy = this.y - mouseY;
+                    var d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 70 && d > 0) { this.x += (dx / d) * 0.35; this.y += (dy / d) * 0.35; }
+                };
+                D.prototype.draw = function (ctx) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color + this.alpha + ')';
+                    ctx.fill();
+                };
+                return D;
+            })();
+
+            var worms = Array.from({ length: WORM_COUNT }, function () { return new Worm(); });
+            var dusts = Array.from({ length: DUST_COUNT }, function () { return new Dust(); });
+
+            window.addEventListener('resize', function () {
+                var nc = Math.floor((window.innerWidth * window.innerHeight) / 15000);
+                var nd = Math.floor((window.innerWidth * window.innerHeight) / 7000);
+                while (worms.length < nc) worms.push(new Worm());
+                if (nc < worms.length) worms = worms.slice(0, nc);
+                while (dusts.length < nd) dusts.push(new Dust());
+                if (nd < dusts.length) dusts = dusts.slice(0, nd);
+            });
+
+            function drawConnections() {
+                var heads = [];
+                for (var i = 0; i < worms.length; i++) {
+                    if (worms[i].history.length === 0) continue;
+                    heads.push(worms[i].history[worms[i].history.length - 1]);
+                }
+                ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+                ctx.lineWidth = 0.5;
+                for (var i = 0; i < heads.length; i++) {
+                    var hx = heads[i].x * GS + PS / 2, hy = heads[i].y * GS + PS / 2;
+                    for (var j = i + 1; j < heads.length; j++) {
+                        var hx2 = heads[j].x * GS + PS / 2, hy2 = heads[j].y * GS + PS / 2;
+                        var dist = Math.sqrt((hx - hx2) * (hx - hx2) + (hy - hy2) * (hy - hy2));
+                        if (dist < 90) {
+                            ctx.globalAlpha = (1 - dist / 90) * 0.25;
+                            ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx2, hy2); ctx.stroke();
+                            ctx.globalAlpha = 1;
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, W, H);
+                for (var i = 0; i < dusts.length; i++) { dusts[i].update(); dusts[i].draw(ctx); }
+                for (var i = 0; i < worms.length; i++) { worms[i].update(); worms[i].draw(ctx); }
+                drawConnections();
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+
+    <script>
+        (() => {
+            const uploadArea  = document.getElementById('videoUploadArea');
+            const fileInput   = document.getElementById('videoFileInput');
+            const compressBtn = document.getElementById('videoCompressBtn');
+            const downloadBtn = document.getElementById('videoDownloadBtn');
+            const resetBtn    = document.getElementById('videoResetBtn');
+            const formatSel   = document.getElementById('videoOutputFormat');
+            const qualitySlider = document.getElementById('qualitySlider');
+            const qualityBadge = document.getElementById('qualityBadge');
+            const resolutionSel = document.getElementById('resolutionSelect');
+            const resultBox   = document.getElementById('videoResultBox');
+            const progressWrap = document.getElementById('progressWrap');
+            const progressBar  = document.getElementById('progressBarFill');
+            const progressText = document.getElementById('progressText');
+            const videoPreview = document.getElementById('videoPreview');
+            const fileInfoDiv  = document.getElementById('fileInfo');
+
+            let videoFile = null, compressedBlob = null, compressedUrl = null;
+            let videoWidth = 0, videoHeight = 0, videoDuration = 0;
+
+            /* ---- Quality badge ---- */
+            const qualityLabels = { 1: '低画质', 2: '中等', 3: '高画质' };
+            const qualityClasses = { 1: 'low', 2: 'medium', 3: 'high' };
+
+            qualitySlider.addEventListener('input', () => {
+                const v = qualitySlider.value;
+                qualityBadge.textContent = qualityLabels[v];
+                qualityBadge.className = 'quality-badge ' + qualityClasses[v];
+            });
+
+            /* ---- File selection ---- */
+            uploadArea.onclick = (e) => {
+                if (videoFile) return; // 已有文件，让视频控件自由响应
+                fileInput.click();
+            };
+            ['dragenter','dragover','dragleave','drop'].forEach(evt =>
+                uploadArea.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); })
+            );
+            ['dragenter','dragover'].forEach(evt =>
+                uploadArea.addEventListener(evt, () => { if (!videoFile) uploadArea.style.background = 'rgba(129,140,248,0.1)'; })
+            );
+            ['dragleave','drop'].forEach(evt =>
+                uploadArea.addEventListener(evt, () => { if (!videoFile) uploadArea.style.background = ''; })
+            );
+
+            uploadArea.ondrop = (e) => {
+                const f = e.dataTransfer.files[0];
+                if (f && f.type.startsWith('video/')) handleVideo(f);
+                else alert('请上传视频文件');
+                uploadArea.style.background = '';
+            };
+            fileInput.onchange = (e) => {
+                const f = e.target.files[0];
+                if (f) handleVideo(f);
+            };
+
+            function formatSize(bytes) {
+                if (!bytes) return '-';
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let i = 0;
+                let s = bytes;
+                while (s >= 1024 && i < units.length - 1) { s /= 1024; i++; }
+                return s.toFixed(i > 0 ? 2 : 0) + ' ' + units[i];
+            }
+
+            function formatDuration(sec) {
+                if (!sec) return '-';
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return m + '分' + s.toString().padStart(2,'0') + '秒';
+            }
+
+            function handleVideo(file) {
+                videoFile = file;
+                compressedBlob = null;
+                if (compressedUrl) { URL.revokeObjectURL(compressedUrl); compressedUrl = null; }
+
+                const url = URL.createObjectURL(file);
+                videoPreview.src = url;
+
+                function onMeta() {
+                    videoWidth = videoPreview.videoWidth;
+                    videoHeight = videoPreview.videoHeight;
+                    videoDuration = videoPreview.duration;
+
+                    document.getElementById('infoName').textContent = file.name;
+                    document.getElementById('infoSize').textContent = formatSize(file.size);
+                    document.getElementById('infoRes').textContent = videoWidth + ' x ' + videoHeight;
+                    document.getElementById('infoDuration').textContent = formatDuration(videoDuration);
+
+                    uploadArea.classList.add('has-file');
+                    compressBtn.disabled = false;
+                    resetBtn.style.display = 'inline-block';
+                    downloadBtn.classList.remove('visible');
+                    resultBox.style.display = 'none';
+                    progressWrap.classList.remove('active');
+
+                    const h = videoHeight;
+                    if (h >= 2160) resolutionSel.value = '2160';
+                    else if (h >= 1440) resolutionSel.value = '1440';
+                    else if (h >= 1080) resolutionSel.value = '1080';
+                    else if (h >= 720) resolutionSel.value = '720';
+                    else resolutionSel.value = 'original';
+
+                    // 检测原始音频信息
+                    try {
+                        const at = videoPreview.captureStream().getAudioTracks();
+                        if (at.length > 0) {
+                            const s = at[0].getSettings();
+                            const ch = s.channelCount || 2;
+                            const sr = s.sampleRate || 44100;
+                            document.getElementById('infoAudio').textContent =
+                                (ch === 1 ? '单声道' : ch === 2 ? '立体声' : ch + '声道') +
+                                ' / ' + (sr / 1000).toFixed(1) + 'kHz';
+                        } else {
+                            document.getElementById('infoAudio').textContent = '无音频';
+                        }
+                    } catch (e) {
+                        document.getElementById('infoAudio').textContent = '检测失败';
+                    }
+                }
+
+                // 元数据可能已缓存，readyState>=1 时 loadedmetadata 不会再次触发
+                if (videoPreview.readyState >= 1) {
+                    onMeta();
+                } else {
+                    videoPreview.onloadedmetadata = onMeta;
+                }
+            }
+
+            /* ---- Reset ---- */
+            resetBtn.onclick = () => {
+                videoFile = null;
+                compressedBlob = null;
+                if (compressedUrl) { URL.revokeObjectURL(compressedUrl); compressedUrl = null; }
+                videoPreview.src = '';
+                fileInput.value = '';
+                uploadArea.classList.remove('has-file');
+                compressBtn.disabled = true;
+                resetBtn.style.display = 'none';
+                downloadBtn.classList.remove('visible');
+                resultBox.style.display = 'none';
+                progressWrap.classList.remove('active');
+                progressBar.style.width = '0%';
+                progressText.textContent = '准备中...';
+            };
+
+            /* ---- Compress (MediaRecorder + Canvas，零依赖，兼容 file://) ---- */
+            compressBtn.onclick = async () => {
+                if (!videoFile) { alert('请先上传视频'); return; }
+
+                let recorder, tracks;
+                try {
+                    compressBtn.disabled = true;
+                    compressBtn.classList.add('compressing');
+                    compressBtn.innerHTML = '<span class="spinner"></span> 压缩中...';
+                    downloadBtn.classList.remove('visible');
+                    resultBox.style.display = 'none';
+                    progressWrap.classList.add('active');
+                    progressBar.style.width = '10%';
+                    progressText.textContent = '正在预加载视频...';
+
+                    const outFmt = formatSel.value;
+                    const quality = parseInt(qualitySlider.value); // 1=low 2=med 3=high
+                    const resolution = resolutionSel.value;
+
+                    // 离屏 video
+                    const v = document.createElement('video');
+                    v.src = URL.createObjectURL(videoFile);
+                    v.preload = 'auto';
+                    v.playsInline = true;
+                    v.muted = true;
+                    await new Promise((res, rej) => {
+                        v.onloadedmetadata = res;
+                        v.onerror = () => rej(new Error('视频加载失败'));
+                    });
+
+                    const srcW = v.videoWidth, srcH = v.videoHeight;
+                    let dstW = srcW, dstH = srcH;
+                    if (resolution !== 'original') {
+                        const targetH = parseInt(resolution);
+                        const ratio = srcW / srcH;
+                        dstH = Math.min(srcH, targetH);
+                        dstW = Math.round(dstH * ratio);
+                    }
+
+                    const fps = 24;
+                    progressBar.style.width = '20%';
+                    progressText.textContent = '准备编码 (分辨率 ' + dstW + 'x' + dstH + ')...';
+
+                    // Canvas 视频轨道
+                    const canvas = document.createElement('canvas');
+                    canvas.width = dstW;
+                    canvas.height = dstH;
+                    const ctx = canvas.getContext('2d');
+                    const canvasVideoStream = canvas.captureStream(fps);
+
+                    // 音频轨道：直接从 video.captureStream() 拿原始音轨，可靠无 AudioContext 坑
+                    const origCapStream = v.captureStream();
+                    const origAudioTracks = origCapStream.getAudioTracks();
+
+                    const tracksArr = [];
+                    canvasVideoStream.getVideoTracks().forEach(t => tracksArr.push(t));
+                    origAudioTracks.forEach(t => tracksArr.push(t));
+                    const combined = new MediaStream(tracksArr);
+                    tracks = tracksArr;
+
+                    // 音频码率
+                    const audioQuality = parseInt(document.getElementById('audioQualitySelect').value);
+                    const audioBitrateMap = { 1: 64000, 2: 128000, 3: 192000 };
+
+                    // bits per pixel: 低画质激进压缩
+                    const bppMap = { 1: 0.02, 2: 0.06, 3: 0.14 };
+                    const targetBitrate = Math.round(dstW * dstH * bppMap[quality] * fps);
+
+                    // MediaRecorder 配置
+                    const recorderOpts = {
+                        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                            ? 'video/webm;codecs=vp9'
+                            : MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+                                ? 'video/webm;codecs=vp8'
+                                : 'video/webm',
+                        videoBitsPerSecond: Math.max(50000, Math.round(targetBitrate))
+                    };
+                    if (audioQuality > 0) {
+                        recorderOpts.audioBitsPerSecond = audioBitrateMap[audioQuality];
+                    }
+
+                    recorder = new MediaRecorder(combined, recorderOpts);
+
+                    const chunks = [];
+                    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+                    const totalDuration = v.duration || 60;
+                    const startTime = Date.now();
+
+                    recorder.onstop = () => {
+                        const outMime = outFmt === 'mp4' ? 'video/mp4' : recorderOpts.mimeType;
+                        compressedBlob = new Blob(chunks, { type: outMime });
+                        if (compressedUrl) URL.revokeObjectURL(compressedUrl);
+                        compressedUrl = URL.createObjectURL(compressedBlob);
+
+                        const savingPct = videoFile.size > 0
+                            ? Math.round((1 - compressedBlob.size / videoFile.size) * 100)
+                            : 0;
+
+                        document.getElementById('resultOriginal').textContent = formatSize(videoFile.size);
+                        document.getElementById('resultCompressed').textContent = formatSize(compressedBlob.size);
+                        if (savingPct > 0) {
+                            document.getElementById('resultSaving').textContent = '节省了 ' + savingPct + '% 的空间';
+                        } else if (savingPct < 0) {
+                            document.getElementById('resultSaving').textContent = '注意：压缩后反而增大了 ' + Math.abs(savingPct) + '%（源文件已高度优化，建议保持原始画质）';
+                        } else {
+                            document.getElementById('resultSaving').textContent = '文件大小基本不变';
+                        }
+
+                        resultBox.style.display = 'block';
+                        downloadBtn.classList.add('visible');
+                        progressText.textContent = '压缩完成！';
+                        progressBar.style.width = '100%';
+                        compressBtn.disabled = false;
+                        compressBtn.classList.remove('compressing');
+                        compressBtn.innerHTML = '开始压缩';
+
+                        tracksArr.forEach(t => t.stop());
+                    };
+
+                    // 帧绘制循环
+                    let stopped = false;
+                    function drawLoop() {
+                        if (stopped) return;
+                        if (v.readyState >= 2) {
+                            ctx.drawImage(v, 0, 0, dstW, dstH);
+                        }
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        const pct = Math.min(95, 20 + Math.round((elapsed / totalDuration) * 75));
+                        progressBar.style.width = pct + '%';
+                        const remain = Math.max(0, Math.round(totalDuration - elapsed));
+                        progressText.textContent = '压缩中... ' + pct + '% (剩余约 ' + remain + '秒)';
+                        if (elapsed < totalDuration) {
+                            requestAnimationFrame(drawLoop);
+                        }
+                    }
+
+                    recorder.start(250);
+                    await v.play();
+                    drawLoop();
+
+                    // 等待实际播放完成
+                    await new Promise(res => {
+                        v.onended = res;
+                        v.ontimeupdate = () => {
+                            if (v.currentTime >= totalDuration - 0.1) res();
+                        };
+                        setTimeout(() => res(), totalDuration * 1000 + 2000);
+                    });
+                    stopped = true;
+
+                    if (recorder.state === 'recording') {
+                        recorder.stop();
+                        v.pause();
+                    }
+
+                } catch (err) {
+                    console.error(err);
+                    const msg = err.message || String(err);
+                    alert('压缩失败：' + msg);
+                    progressText.textContent = '压缩失败：' + msg;
+                    compressBtn.disabled = false;
+                    compressBtn.classList.remove('compressing');
+                    compressBtn.innerHTML = '开始压缩';
+                    if (recorder && recorder.state === 'recording') recorder.stop();
+                    if (tracks) tracks.forEach(t => { try { t.stop(); } catch(e) {} });
+                }
+            };
+
+            /* ---- Download ---- */
+            downloadBtn.onclick = () => {
+                if (!compressedUrl) { alert('请先压缩视频'); return; }
+                const ext = formatSel.value === 'mp4' ? 'mp4' : 'webm';
+                const baseName = videoFile ? videoFile.name.replace(/\.[^.]+$/, '') : 'video';
+                const a = document.createElement('a');
+                a.href = compressedUrl;
+                a.download = baseName + '-compressed.' + ext;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+        })();
+    </script>
+</body>
+</html>
