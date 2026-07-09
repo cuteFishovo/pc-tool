@@ -9,94 +9,135 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
+
     body {
-      background: #f5f7fb;
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background-color: #09090b;
+      color: #f4f4f5;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      background-image: linear-gradient(to bottom left, #242323, #131314, #000000);
+      background-attachment: fixed;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       margin: 0;
       padding: 20px;
-      color: #1e293b;
+      position: relative;
     }
+
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+
+    @keyframes fadeUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
     .card {
       max-width: 560px;
       width: 100%;
-      background: #ffffff;
-      border-radius: 2rem;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+      background: rgba(24, 24, 27, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
       padding: 2.25rem 2rem;
       display: flex;
       flex-direction: column;
       gap: 1.8rem;
+      animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
     h1 {
       font-size: 1.9rem;
       font-weight: 500;
       letter-spacing: -0.3px;
-      color: #0f172a;
+      color: #e4e4e7;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
+
     h1 span {
-      background: #eef2ff;
-      color: #4f46e5;
+      background: rgba(79, 70, 229, 0.2);
+      color: #818cf8;
       font-size: 1rem;
       font-weight: 500;
       padding: 0.2rem 0.8rem;
       border-radius: 2rem;
       margin-left: 0.5rem;
+      border: 1px solid rgba(129, 140, 248, 0.2);
     }
+
     .subtitle {
       font-size: 0.95rem;
-      color: #64748b;
+      color: #a1a1aa;
       margin-top: -0.8rem;
       border-left: 3px solid #818cf8;
       padding-left: 1rem;
     }
+
     .upload-area {
-      border: 2px dashed #cbd5e1;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
       border-radius: 1.5rem;
       padding: 2.5rem 1.5rem;
       text-align: center;
-      background: #f8fafc;
-      transition: background 0.2s, border-color 0.2s;
+      background: rgba(255, 255, 255, 0.02);
+      transition: background 0.3s, border-color 0.3s;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0.8rem;
     }
+
     .upload-area:hover {
-      border-color: #818cf8;
-      background: #f1f5f9;
+      border-color: rgba(129, 140, 248, 0.5);
+      background: rgba(255, 255, 255, 0.04);
     }
+
     .upload-area.dragover {
-      border-color: #4f46e5;
-      background: #eef2ff;
+      border-color: #818cf8;
+      background: rgba(79, 70, 229, 0.1);
       border-style: solid;
     }
+
     .icon {
       font-size: 2.8rem;
-      color: #6366f1;
+      color: #818cf8;
       opacity: 0.8;
     }
+
     .upload-text {
       font-weight: 500;
       font-size: 1.1rem;
+      color: #e4e4e7;
     }
+
     .upload-hint {
       font-size: 0.85rem;
-      color: #64748b;
+      color: #71717a;
     }
+
     #fileInput {
       display: none;
     }
+
     .file-list {
-      background: #f1f5f9;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 1.2rem;
       padding: 0.9rem 1.2rem;
       display: flex;
@@ -106,9 +147,10 @@
       gap: 0.8rem;
       font-size: 0.95rem;
     }
+
     .file-name {
       font-weight: 500;
-      color: #0f172a;
+      color: #e4e4e7;
       word-break: break-word;
       display: flex;
       align-items: center;
@@ -116,14 +158,16 @@
       flex: 1;
       min-width: 150px;
     }
+
     .file-name::before {
       content: "    ";
       font-size: 1.2rem;
     }
+
     .remove-btn {
       background: none;
       border: none;
-      color: #94a3b8;
+      color: #71717a;
       font-size: 1.4rem;
       cursor: pointer;
       padding: 0.2rem 0.4rem;
@@ -131,51 +175,62 @@
       line-height: 1;
       transition: color 0.2s, background 0.2s;
     }
+
     .remove-btn:hover {
       color: #ef4444;
-      background: #fee2e2;
+      background: rgba(239, 68, 68, 0.15);
     }
+
     .quality-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 1rem;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 1.2rem;
       padding: 0.9rem 1.2rem;
     }
+
     .quality-label {
       font-weight: 500;
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      color: #334155;
+      color: #cdcdd3;
     }
+
     .quality-selector {
       display: flex;
       align-items: center;
       gap: 0.8rem;
     }
+
     select {
       padding: 0.5rem 2.2rem 0.5rem 1rem;
       border-radius: 0.8rem;
-      border: 1px solid #cbd5e1;
-      background: #f8fafc;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
       font-weight: 500;
-      color: #1e293b;
+      color: #e4e4e7;
       font-size: 0.9rem;
       cursor: pointer;
       appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
       background-repeat: no-repeat;
       background-position: right 0.7rem center;
       background-size: 1.2rem;
     }
+
+    select:focus {
+      outline: none;
+      border-color: rgba(129, 140, 248, 0.5);
+    }
+
     .convert-btn {
-      background: #1e293b;
-      border: none;
+      background: rgba(24, 24, 27, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       color: white;
       font-weight: 600;
       font-size: 1.1rem;
@@ -183,44 +238,56 @@
       border-radius: 1.2rem;
       width: 100%;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
+      transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.6rem;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
+
     .convert-btn:hover:not(:disabled) {
-      background: #0f172a;
+      background: rgba(39, 39, 42, 0.6);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
+
     .convert-btn:active:not(:disabled) {
       transform: scale(0.98);
     }
+
     .convert-btn:disabled {
-      background: #cbd5e1;
-      color: #64748b;
+      background: rgba(255, 255, 255, 0.05);
+      color: #52525b;
       cursor: not-allowed;
+      border-color: rgba(255, 255, 255, 0.05);
     }
+
     .status-message {
       text-align: center;
       font-size: 0.9rem;
-      color: #475569;
+      color: #a1a1aa;
       min-height: 1.8rem;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.4rem;
-      background: #f1f5f9;
+      background: rgba(255, 255, 255, 0.03);
       border-radius: 2rem;
       padding: 0.4rem 1rem;
       margin-top: -0.4rem;
     }
+
     .footer-note {
       font-size: 0.8rem;
-      color: #94a3b8;
+      color: #52525b;
       text-align: center;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
       padding-top: 1rem;
     }
+
     @media (max-width: 480px) {
       .card {
         padding: 1.8rem 1.2rem;
@@ -230,9 +297,20 @@
         align-items: flex-start;
       }
     }
+    .back-link {
+      position: fixed; top: 16px; left: 16px; z-index: 100;
+      padding: 8px 16px; color: #a1a1aa; font-size: 14px;
+      background: rgba(24, 24, 27, 0.4); border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px; transition: all 0.3s; backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px); text-decoration: none;
+    }
+    .back-link:hover { background: rgba(39, 39, 42, 0.6); color: #e4e4e7; transform: translateY(-1px); }
   </style>
 </head>
 <body>
+  <canvas id="bg-canvas" class="bg-canvas"></canvas>
+  <a href="../index.html" class="back-link">← 返回转换工具首页</a>
+
   <div class="card">
     <h1>音频转OGG <span>离线</span></h1>
     <div class="subtitle">支持 MP3 · WAV · FLAC · AAC · M4A 等格式</div>
@@ -268,13 +346,166 @@
     <div class="footer-note">纯浏览器端转换 · 无需网络 · 安全隐私</div>
   </div>
 
+  <!-- 增强粒子背景 -->
+  <script>
+    (function () {
+      const canvas = document.getElementById('bg-canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, mouseX = -9999, mouseY = -9999;
+
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      document.addEventListener('mousemove', function (e) { mouseX = e.clientX; mouseY = e.clientY; });
+      document.addEventListener('mouseleave', function () { mouseX = -9999; mouseY = -9999; });
+
+      var GS = 8, PS = 6;
+      var WORM_COUNT = Math.floor((W * H) / 15000);
+      var DUST_COUNT = Math.floor((W * H) / 7000);
+
+      var PALETTE = [
+        'rgba(16, 185, 129, ',
+        'rgba(6, 182, 212, ',
+        'rgba(168, 85, 247, ',
+        'rgba(251, 146, 60, ',
+        'rgba(236, 72, 153, ',
+        'rgba(52, 211, 153, ',
+        'rgba(129, 140, 248, ',
+        'rgba(250, 204, 21, ',
+      ];
+
+      function rpick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+      var Worm = (function () {
+        function W() { this.init(true); }
+        W.prototype.init = function (pre) {
+          this.x = Math.random() * (W / GS);
+          this.y = Math.random() * (H / GS);
+          this.angle = Math.random() * Math.PI * 2;
+          this.speed = Math.random() * 0.1 + 0.03;
+          this.history = [];
+          this.maxLen = Math.floor(Math.random() * 65 + 20);
+          this.turn = (Math.random() - 0.5) * 0.035;
+          this.color = rpick(PALETTE);
+          this.glowColor = this.color.replace(')', '').replace('rgba', 'rgba');
+          if (pre) { var n = Math.floor(Math.random() * this.maxLen); for (var i = 0; i < n; i++) this.update(true); }
+        };
+        W.prototype.update = function (isInit) {
+          var fa = Math.sin(this.x * 0.035) * Math.cos(this.y * 0.035) * Math.PI * 2;
+          var dx = mouseX / GS - this.x, dy = mouseY / GS - this.y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 35 && d > 0) fa += Math.atan2(dy, dx) * (1 - d / 35) * 0.025;
+          this.angle += (fa - this.angle) * 0.018 + this.turn;
+          this.x += Math.cos(this.angle) * this.speed;
+          this.y += Math.sin(this.angle) * this.speed;
+          var gx = Math.floor(this.x), gy = Math.floor(this.y);
+          if (this.history.length === 0 || this.history[this.history.length - 1].x !== gx || this.history[this.history.length - 1].y !== gy) {
+            this.history.push({ x: gx, y: gy });
+            if (this.history.length > this.maxLen) this.history.shift();
+          }
+          if (!isInit && (this.x < -15 || this.x > (W / GS) + 15 || this.y < -15 || this.y > (H / GS) + 15)) this.init();
+        };
+        W.prototype.draw = function (ctx) {
+          if (this.history.length < 2) return;
+          for (var i = 0; i < this.history.length; i++) {
+            var pos = this.history[i], px = pos.x * GS, py = pos.y * GS;
+            var alpha = 1, prog = i / this.history.length;
+            if (prog > 0.8) alpha = (1 - prog) * 5;
+            else if (prog < 0.2) alpha = prog * 5;
+            if (i === this.history.length - 1) { ctx.shadowColor = this.glowColor + '0.5)'; ctx.shadowBlur = 5; }
+            if (Math.random() > 0.96) alpha *= 0.15;
+            ctx.fillStyle = this.color + alpha + ')';
+            ctx.fillRect(px, py, PS, PS);
+            ctx.shadowBlur = 0;
+          }
+        };
+        return W;
+      })();
+
+      var Dust = (function () {
+        function D() {
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          this.r = Math.random() * 2.2 + 0.8;
+          this.vx = (Math.random() - 0.5) * 0.25;
+          this.vy = (Math.random() - 0.5) * 0.25;
+          this.alpha = Math.random() * 0.45 + 0.15;
+          this.da = (Math.random() - 0.5) * 0.004;
+          this.color = rpick(PALETTE);
+        }
+        D.prototype.update = function () {
+          this.x += this.vx; this.y += this.vy;
+          this.alpha += this.da;
+          if (this.alpha > 0.65 || this.alpha < 0.04) this.da *= -1;
+          if (this.x < -10) this.x = W + 10; if (this.x > W + 10) this.x = -10;
+          if (this.y < -10) this.y = H + 10; if (this.y > H + 10) this.y = -10;
+          var dx = this.x - mouseX, dy = this.y - mouseY;
+          var d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 70 && d > 0) { this.x += (dx / d) * 0.35; this.y += (dy / d) * 0.35; }
+        };
+        D.prototype.draw = function (ctx) {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+          ctx.fillStyle = this.color + this.alpha + ')';
+          ctx.fill();
+        };
+        return D;
+      })();
+
+      var worms = Array.from({ length: WORM_COUNT }, function () { return new Worm(); });
+      var dusts = Array.from({ length: DUST_COUNT }, function () { return new Dust(); });
+
+      window.addEventListener('resize', function () {
+        var nc = Math.floor((window.innerWidth * window.innerHeight) / 15000);
+        var nd = Math.floor((window.innerWidth * window.innerHeight) / 7000);
+        while (worms.length < nc) worms.push(new Worm());
+        if (nc < worms.length) worms = worms.slice(0, nc);
+        while (dusts.length < nd) dusts.push(new Dust());
+        if (nd < dusts.length) dusts = dusts.slice(0, nd);
+      });
+
+      function drawConnections() {
+        var heads = [];
+        for (var i = 0; i < worms.length; i++) {
+          if (worms[i].history.length === 0) continue;
+          heads.push(worms[i].history[worms[i].history.length - 1]);
+        }
+        ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+        ctx.lineWidth = 0.5;
+        for (var i = 0; i < heads.length; i++) {
+          var hx = heads[i].x * GS + PS / 2, hy = heads[i].y * GS + PS / 2;
+          for (var j = i + 1; j < heads.length; j++) {
+            var hx2 = heads[j].x * GS + PS / 2, hy2 = heads[j].y * GS + PS / 2;
+            var dist = Math.sqrt((hx - hx2) * (hx - hx2) + (hy - hy2) * (hy - hy2));
+            if (dist < 90) {
+              ctx.globalAlpha = (1 - dist / 90) * 0.25;
+              ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx2, hy2); ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+          }
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, W, H);
+        for (var i = 0; i < dusts.length; i++) { dusts[i].update(); dusts[i].draw(ctx); }
+        for (var i = 0; i < worms.length; i++) { worms[i].update(); worms[i].draw(ctx); }
+        drawConnections();
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
+  </script>
+
   <script>
     (function() {
-      // ========== 极简OGG Vorbis编码器 (内联实现) ==========
-      // 基于简化的Vorbis编码流程，生成可播放的OGG容器
-      // 注意：这是一个教学级实现，适合大多数常见音频，但极端情况可能需调整
       const OggVorbisEncoder = (function() {
-        // CRC32 查找表
         const crcTable = new Uint32Array(256);
         for (let i = 0; i < 256; i++) {
           let r = i;
@@ -292,26 +523,19 @@
           return (crc ^ 0xFFFFFFFF) >>> 0;
         }
 
-        // 简化Vorbis标识头 (固定参数: 2声道, 44100Hz, 质量可变)
         function createVorbisHeader(sampleRate, channels, quality) {
-          // 使用固定的码本/模式 (简化的Vorbis I)
           const header = new Uint8Array(30);
-          header.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 0); // vorbis
-          // 版本
+          header.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 0);
           header.set([0x00, 0x00, 0x00, 0x00], 6);
-          // 声道数
           header[10] = channels;
-          // 采样率
           new DataView(header.buffer).setUint32(11, sampleRate, true);
-          // 比特率相关 (最大、标称、最小)
           const nominalBitrate = Math.floor(quality * 192000);
           new DataView(header.buffer).setInt32(15, 0, true);
           new DataView(header.buffer).setInt32(19, nominalBitrate, true);
           new DataView(header.buffer).setInt32(23, 0, true);
-          // 块大小
-          header[27] = 0x08; // blocksize_0 = 256
-          header[28] = 0x10; // blocksize_1 = 2048
-          header[29] = 0x01; // framing_flag
+          header[27] = 0x08;
+          header[28] = 0x10;
+          header[29] = 0x01;
           return header;
         }
 
@@ -328,96 +552,80 @@
               dataOffset += 255;
             }
           }
-          
+
           const pageHeaderSize = 27 + segments.length;
           const pageBuffer = new ArrayBuffer(pageHeaderSize + segmentData.length);
           const page = new Uint8Array(pageBuffer);
-          
-          page.set([0x4f, 0x67, 0x67, 0x53], 0); // OggS
-          page[4] = 0; // version
+
+          page.set([0x4f, 0x67, 0x67, 0x53], 0);
+          page[4] = 0;
           page[5] = headerType;
-          
+
           new DataView(pageBuffer).setBigInt64(6, BigInt(granulePosition), true);
           new DataView(pageBuffer).setUint32(14, streamSerial, true);
-          new DataView(pageBuffer).setUint32(18, 0, true); // page sequence
-          // CRC32 占位
+          new DataView(pageBuffer).setUint32(18, 0, true);
           page[26] = segments.length;
-          
+
           for (let i = 0; i < segments.length; i++) {
             page[27 + i] = segments[i];
           }
-          
+
           page.set(segmentData, 27 + segments.length);
-          
+
           const crc = crc32(page);
           new DataView(pageBuffer).setUint32(22, crc, true);
-          
+
           return page;
         }
 
-        // 将AudioBuffer编码为OGG
         function encode(audioBuffer, quality) {
           const sampleRate = audioBuffer.sampleRate;
           const channels = Math.min(audioBuffer.numberOfChannels, 2);
           const length = audioBuffer.length;
-          
-          // 获取PCM数据 (交错)
+
           const leftChannel = audioBuffer.getChannelData(0);
           const rightChannel = channels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
-          
+
           const pcmData = new Float32Array(length * 2);
           for (let i = 0; i < length; i++) {
             pcmData[i * 2] = leftChannel[i];
             pcmData[i * 2 + 1] = rightChannel[i];
           }
-          
-          // 简化编码: 采用类似PCM的有损封装 (实际上生成OGG容器 + 模拟Vorbis数据)
-          // 由于完整Vorbis编码器极复杂，这里使用一种巧妙的折中：
-          // 将PCM数据包装进OGG容器，并添加最小化的Vorbis头使得部分播放器可识别。
-          
+
           const serial = Math.floor(Math.random() * 0xFFFFFFFF);
           const vorbisHeader = createVorbisHeader(sampleRate, channels, quality);
-          
-          // 生成简化的音频数据包 (实际应用中需完整的Vorbis编码)
-          // 这里将PCM数据切片并封装为"音频包"
+
           const packets = [];
-          const samplesPerPacket = 1024; 
-          
+          const samplesPerPacket = 1024;
+
           for (let offset = 0; offset < pcmData.length; offset += samplesPerPacket * 2) {
             const end = Math.min(offset + samplesPerPacket * 2, pcmData.length);
             const packetData = new Uint8Array((end - offset) * 2);
             const view = new DataView(packetData.buffer);
-            
+
             for (let i = offset; i < end; i++) {
-              // 将float32转为int16 (简单的量化)
               const sample = Math.max(-1, Math.min(1, pcmData[i]));
               const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
               view.setInt16((i - offset) * 2, intSample, true);
             }
             packets.push(packetData);
           }
-          
-          // 构建OGG流
+
           const oggParts = [];
-          
-          // 标识头页
+
           oggParts.push(createOggPage(vorbisHeader, 0x02, 0, serial));
-          
-          // 注释头 (最小化)
+
           const commentHeader = new Uint8Array([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73, 0x00, 0x00, 0x00, 0x00, 0x01]);
           oggParts.push(createOggPage(commentHeader, 0x00, 0, serial));
-          
-          // 音频数据页
+
           let granulePos = 0;
           for (const packet of packets) {
             granulePos += samplesPerPacket;
             oggParts.push(createOggPage(packet, 0x00, granulePos, serial));
           }
-          
-          // 结束页
+
           oggParts.push(createOggPage(new Uint8Array(0), 0x04, granulePos, serial));
-          
-          // 合并所有部分
+
           const totalLength = oggParts.reduce((acc, part) => acc + part.length, 0);
           const finalOgg = new Uint8Array(totalLength);
           let offset = 0;
@@ -425,14 +633,13 @@
             finalOgg.set(part, offset);
             offset += part.length;
           }
-          
+
           return new Blob([finalOgg], { type: 'audio/ogg' });
         }
 
         return { encode };
       })();
 
-      // 界面逻辑
       const dropArea = document.getElementById('dropArea');
       const fileInput = document.getElementById('fileInput');
       const fileInfoDiv = document.getElementById('fileInfo');
@@ -446,8 +653,8 @@
 
       function updateStatus(text, isError = false) {
         statusMessage.innerHTML = text;
-        statusMessage.style.color = isError ? '#b91c1c' : '#475569';
-        statusMessage.style.background = isError ? '#fee2e2' : '#f1f5f9';
+        statusMessage.style.color = isError ? '#f87171' : '#a1a1aa';
+        statusMessage.style.background = isError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.03)';
       }
 
       function resetUI() {
@@ -545,7 +752,7 @@
           }
 
           updateStatus('正在编码为 OGG …');
-          
+
           const oggBlob = OggVorbisEncoder.encode(audioBuffer, quality);
           await audioContext.close();
 

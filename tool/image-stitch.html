@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片拼接</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-y: auto;
+            background-color: #09090b;
+            color: #f4f4f5;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            background-image: linear-gradient(to bottom left, #242323, #131314, #000000);
+            background-attachment: fixed;
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        .bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(2px);
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        @keyframes fadeUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .back-link {
+            color: #a1a1aa;
+            font-size: 15px;
+            transition: color 0.3s;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .back-link:hover { color: #e4e4e7; }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            z-index: 1;
+        }
+
+        .page {
+            background: rgba(24, 24, 27, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 16px;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .page h1 {
+            color: #e4e4e7;
+            margin-bottom: 25px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .page > p {
+            color: #a1a1aa;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 10px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.02);
+            text-align: center;
+            color: #a1a1aa;
+        }
+
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #stitchFileInput { display: none; }
+
+        .format-select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+            cursor: pointer;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1.2rem;
+            padding-right: 2.2rem;
+        }
+
+        .format-select:focus { outline: none; border-color: rgba(129, 140, 248, 0.5); }
+
+        .stitch-btn, .download-btn {
+            padding: 12px 25px;
+            background: rgba(24, 24, 27, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .stitch-btn:hover, .download-btn:hover {
+            background: rgba(39, 39, 42, 0.6);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .stitch-btn:active, .download-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .download-btn {
+            background: rgba(39, 174, 96, 0.3);
+            border-color: rgba(39, 174, 96, 0.3);
+            display: none;
+        }
+
+        .download-btn:hover {
+            background: rgba(39, 174, 96, 0.5);
+            border-color: rgba(39, 174, 96, 0.5);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        .result-box h3 { color: #e4e4e7; }
+
+        .contact-tip {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 15px;
+            color: #71717a;
+            line-height: 1.6;
+        }
+
+        .contact-tip strong { color: #818cf8; }
+
+        .stitch-preview-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .stitch-preview-item {
+            width: 100px;
+            height: 100px;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stitch-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .stitch-preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(239, 68, 68, 0.7);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .stitch-result-img {
+            max-width: 100%;
+            max-height: 600px;
+            margin: 20px auto;
+            border-radius: 8px;
+            display: none;
+            object-fit: contain;
+        }
+
+        .layout-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .layout-option {
+            flex-shrink: 0;
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .layout-option:hover { border-color: rgba(129, 140, 248, 0.5); }
+        .layout-option.active {
+            border-color: #818cf8;
+            background: rgba(129, 140, 248, 0.1);
+        }
+
+        .layout-preview {
+            width: 50px;
+            height: 50px;
+            display: grid;
+            gap: 2px;
+        }
+
+        .layout-preview div { background: #a1a1aa; border-radius: 2px; }
+
+        .resolution-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            color: #a1a1aa;
+        }
+
+        .res-input {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+        }
+
+        .res-input:focus { outline: none; border-color: rgba(129, 140, 248, 0.5); }
+
+        .fit-mode-group {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .fit-mode-btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            color: #a1a1aa;
+            transition: all 0.3s;
+        }
+
+        .fit-mode-btn:hover { border-color: rgba(255, 255, 255, 0.2); color: #e4e4e7; }
+        .fit-mode-btn.active {
+            background: rgba(129, 140, 248, 0.2);
+            border-color: #818cf8;
+            color: #e4e4e7;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .page { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas" class="bg-canvas"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <!-- 增强粒子背景 -->
+    <script>
+        (function () {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, mouseX = -9999, mouseY = -9999;
+
+            function resize() {
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = W;
+                canvas.height = H;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            document.addEventListener('mousemove', function (e) { mouseX = e.clientX; mouseY = e.clientY; });
+            document.addEventListener('mouseleave', function () { mouseX = -9999; mouseY = -9999; });
+
+            var GS = 8, PS = 6;
+            var WORM_COUNT = Math.floor((W * H) / 15000);
+            var DUST_COUNT = Math.floor((W * H) / 7000);
+
+            var PALETTE = [
+                'rgba(16, 185, 129, ',
+                'rgba(6, 182, 212, ',
+                'rgba(168, 85, 247, ',
+                'rgba(251, 146, 60, ',
+                'rgba(236, 72, 153, ',
+                'rgba(52, 211, 153, ',
+                'rgba(129, 140, 248, ',
+                'rgba(250, 204, 21, ',
+            ];
+
+            function rpick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+            var Worm = (function () {
+                function W() { this.init(true); }
+                W.prototype.init = function (pre) {
+                    this.x = Math.random() * (W / GS);
+                    this.y = Math.random() * (H / GS);
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = Math.random() * 0.1 + 0.03;
+                    this.history = [];
+                    this.maxLen = Math.floor(Math.random() * 65 + 20);
+                    this.turn = (Math.random() - 0.5) * 0.035;
+                    this.color = rpick(PALETTE);
+                    this.glowColor = this.color.replace(')', '').replace('rgba', 'rgba');
+                    if (pre) { var n = Math.floor(Math.random() * this.maxLen); for (var i = 0; i < n; i++) this.update(true); }
+                };
+                W.prototype.update = function (isInit) {
+                    var fa = Math.sin(this.x * 0.035) * Math.cos(this.y * 0.035) * Math.PI * 2;
+                    var dx = mouseX / GS - this.x, dy = mouseY / GS - this.y;
+                    var d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 35 && d > 0) fa += Math.atan2(dy, dx) * (1 - d / 35) * 0.025;
+                    this.angle += (fa - this.angle) * 0.018 + this.turn;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed;
+                    var gx = Math.floor(this.x), gy = Math.floor(this.y);
+                    if (this.history.length === 0 || this.history[this.history.length - 1].x !== gx || this.history[this.history.length - 1].y !== gy) {
+                        this.history.push({ x: gx, y: gy });
+                        if (this.history.length > this.maxLen) this.history.shift();
+                    }
+                    if (!isInit && (this.x < -15 || this.x > (W / GS) + 15 || this.y < -15 || this.y > (H / GS) + 15)) this.init();
+                };
+                W.prototype.draw = function (ctx) {
+                    if (this.history.length < 2) return;
+                    for (var i = 0; i < this.history.length; i++) {
+                        var pos = this.history[i], px = pos.x * GS, py = pos.y * GS;
+                        var alpha = 1, prog = i / this.history.length;
+                        if (prog > 0.8) alpha = (1 - prog) * 5;
+                        else if (prog < 0.2) alpha = prog * 5;
+                        if (i === this.history.length - 1) { ctx.shadowColor = this.glowColor + '0.5)'; ctx.shadowBlur = 5; }
+                        if (Math.random() > 0.96) alpha *= 0.15;
+                        ctx.fillStyle = this.color + alpha + ')';
+                        ctx.fillRect(px, py, PS, PS);
+                        ctx.shadowBlur = 0;
+                    }
+                };
+                return W;
+            })();
+
+            var Dust = (function () {
+                function D() {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.r = Math.random() * 2.2 + 0.8;
+                    this.vx = (Math.random() - 0.5) * 0.25;
+                    this.vy = (Math.random() - 0.5) * 0.25;
+                    this.alpha = Math.random() * 0.45 + 0.15;
+                    this.da = (Math.random() - 0.5) * 0.004;
+                    this.color = rpick(PALETTE);
+                }
+                D.prototype.update = function () {
+                    this.x += this.vx; this.y += this.vy;
+                    this.alpha += this.da;
+                    if (this.alpha > 0.65 || this.alpha < 0.04) this.da *= -1;
+                    if (this.x < -10) this.x = W + 10; if (this.x > W + 10) this.x = -10;
+                    if (this.y < -10) this.y = H + 10; if (this.y > H + 10) this.y = -10;
+                    var dx = this.x - mouseX, dy = this.y - mouseY;
+                    var d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 70 && d > 0) { this.x += (dx / d) * 0.35; this.y += (dy / d) * 0.35; }
+                };
+                D.prototype.draw = function (ctx) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color + this.alpha + ')';
+                    ctx.fill();
+                };
+                return D;
+            })();
+
+            var worms = Array.from({ length: WORM_COUNT }, function () { return new Worm(); });
+            var dusts = Array.from({ length: DUST_COUNT }, function () { return new Dust(); });
+
+            window.addEventListener('resize', function () {
+                var nc = Math.floor((window.innerWidth * window.innerHeight) / 15000);
+                var nd = Math.floor((window.innerWidth * window.innerHeight) / 7000);
+                while (worms.length < nc) worms.push(new Worm());
+                if (nc < worms.length) worms = worms.slice(0, nc);
+                while (dusts.length < nd) dusts.push(new Dust());
+                if (nd < dusts.length) dusts = dusts.slice(0, nd);
+            });
+
+            function drawConnections() {
+                var heads = [];
+                for (var i = 0; i < worms.length; i++) {
+                    if (worms[i].history.length === 0) continue;
+                    heads.push(worms[i].history[worms[i].history.length - 1]);
+                }
+                ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+                ctx.lineWidth = 0.5;
+                for (var i = 0; i < heads.length; i++) {
+                    var hx = heads[i].x * GS + PS / 2, hy = heads[i].y * GS + PS / 2;
+                    for (var j = i + 1; j < heads.length; j++) {
+                        var hx2 = heads[j].x * GS + PS / 2, hy2 = heads[j].y * GS + PS / 2;
+                        var dist = Math.sqrt((hx - hx2) * (hx - hx2) + (hy - hy2) * (hy - hy2));
+                        if (dist < 90) {
+                            ctx.globalAlpha = (1 - dist / 90) * 0.25;
+                            ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx2, hy2); ctx.stroke();
+                            ctx.globalAlpha = 1;
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, W, H);
+                for (var i = 0; i < dusts.length; i++) { dusts[i].update(); dusts[i].draw(ctx); }
+                for (var i = 0; i < worms.length; i++) { worms[i].update(); worms[i].draw(ctx); }
+                drawConnections();
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+
+    <div class="container">
+        <a href="../index.html" class="back-link">← 返回转换工具首页</a>
+        <div class="page">
+            <h1>图片拼接</h1>
+            <p>支持多张图片多种布局拼接，可自定义输出分辨率 拉伸/裁剪</p>
+
+            <div class="resolution-inputs">
+                <input type="number" class="res-input" id="outWidth" placeholder="宽度" min="0">
+                <span>×</span>
+                <input type="number" class="res-input" id="outHeight" placeholder="高度" min="0">
+            </div>
+
+            <div class="fit-mode-group" id="fitModeGroup">
+                <button class="fit-mode-btn" data-mode="stretch">拉伸</button>
+                <button class="fit-mode-btn" data-mode="cover">裁剪</button>
+            </div>
+
+            <div class="layout-selector" id="layoutSelector">
+                请先上传图片
+            </div>
+
+            <div class="upload-area" id="stitchUploadArea">
+                <p>点击或拖拽上传多张图片</p>
+                <input type="file" id="stitchFileInput" accept="image/*" multiple>
+            </div>
+            <div class="stitch-preview-list" id="stitchPreviewList">
+                <p style="color: #71717a; width: 100%; text-align: center;">暂无上传的图片</p>
+            </div>
+            <div style="text-align:center; margin:20px 0;">
+                <select class="format-select" id="stitchOutputFormat">
+                    <option value="jpg">JPG</option>
+                    <option value="png">PNG</option>
+                    <option value="webp">WebP</option>
+                    <option value="gif">GIF</option>
+                    <option value="bmp">BMP</option>
+                    <option value="pdf">PDF</option>
+                </select>
+                <button class="stitch-btn" id="stitchBtn">开始拼接</button>
+                <button class="download-btn" id="stitchDownloadBtn">下载拼接后的图片</button>
+            </div>
+            <div class="result-box" id="stitchResultBox">
+                <h3>拼接完成</h3>
+                <img id="stitchedImage" class="stitch-result-img">
+            </div>
+            <div class="contact-tip">面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong></div>
+        </div>
+    </div>
+
+    <script>
+        const stitchUploadArea = document.getElementById('stitchUploadArea');
+        const stitchFileInput = document.getElementById('stitchFileInput');
+        const stitchPreviewList = document.getElementById('stitchPreviewList');
+        const stitchBtn = document.getElementById('stitchBtn');
+        const stitchDownloadBtn = document.getElementById('stitchDownloadBtn');
+        const stitchOutputFormat = document.getElementById('stitchOutputFormat');
+        const stitchResultBox = document.getElementById('stitchResultBox');
+        const stitchedImage = document.getElementById('stitchedImage');
+        const layoutSelector = document.getElementById('layoutSelector');
+
+        const outWidthEl = document.getElementById('outWidth');
+        const outHeightEl = document.getElementById('outHeight');
+        const fitModeGroup = document.getElementById('fitModeGroup');
+        const fitModeBtns = document.querySelectorAll('.fit-mode-btn');
+
+        let stitchImages = [];
+        let stitchedUrl = null;
+        let currentLayout = null;
+        let fitMode = 'none';
+
+        const layoutTemplates = {
+            1: [{ name: '单张', cols: 1, rows: 1, calc: () => [{ x: 0, y: 0, w: 1, h: 1 }] }],
+            2: [
+                { name: '横向并排', cols: 2, rows: 1, calc: () => [{ x: 0, y: 0, w: 0.5, h: 1 }, { x: 0.5, y: 0, w: 0.5, h: 1 }] },
+                { name: '纵向叠加', cols: 1, rows: 2, calc: () => [{ x: 0, y: 0, w: 1, h: 0.5 }, { x: 0, y: 0.5, w: 1, h: 0.5 }] }
+            ],
+            3: [
+                { name: '三图横排', cols: 3, rows: 1, calc: () => [{ x: 0, y: 0, w: 1 / 3, h: 1 }, { x: 1 / 3, y: 0, w: 1 / 3, h: 1 }, { x: 2 / 3, y: 0, w: 1 / 3, h: 1 }] },
+                { name: '三图竖排', cols: 1, rows: 3, calc: () => [{ x: 0, y: 0, w: 1, h: 1 / 3 }, { x: 0, y: 1 / 3, w: 1, h: 1 / 3 }, { x: 0, y: 2 / 3, w: 1, h: 1 / 3 }] },
+                { name: '左一右二', cols: 2, rows: 2, calc: () => [{ x: 0, y: 0, w: 0.5, h: 1 }, { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }] },
+                { name: '左二右一', cols: 2, rows: 2, calc: () => [{ x: 0, y: 0, w: 0.5, h: 0.5 }, { x: 0, y: 0.5, w: 0.5, h: 0.5 }, { x: 0.5, y: 0, w: 0.5, h: 1 }] },
+                { name: '上一下二', cols: 2, rows: 2, calc: () => [{ x: 0, y: 0, w: 1, h: 0.5 }, { x: 0, y: 0.5, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }] },
+                { name: '上二下一', cols: 2, rows: 2, calc: () => [{ x: 0, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0, y: 0.5, w: 1, h: 0.5 }] }
+            ],
+            4: [
+                { name: '四宫格', cols: 2, rows: 2, calc: () => [{ x: 0, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0, y: 0.5, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.5, h: 0.5 }] },
+                { name: '横向长图', cols: 4, rows: 1, calc: n => Array(n).fill(0).map((_, k) => ({ x: k / n, y: 0, w: 1 / n, h: 1 })) },
+                { name: '竖向长图', cols: 1, rows: 4, calc: n => Array(n).fill(0).map((_, k) => ({ x: 0, y: k / n, w: 1, h: 1 / n })) }
+            ],
+            5: [
+                { name: '5图网格', cols: 3, rows: 2, calc: () => [{ x: 0, y: 0, w: 1 / 3, h: 1 / 2 }, { x: 1 / 3, y: 0, w: 1 / 3, h: 1 / 2 }, { x: 2 / 3, y: 0, w: 1 / 3, h: 1 / 2 }, { x: 0, y: 1 / 2, w: 1 / 3, h: 1 / 2 }, { x: 1 / 3, y: 1 / 2, w: 1 / 3, h: 1 / 2 }] },
+                { name: '横向长图', cols: 5, rows: 1, calc: n => Array(n).fill(0).map((_, k) => ({ x: k / n, y: 0, w: 1 / n, h: 1 })) },
+                { name: '竖向长图', cols: 1, rows: 5, calc: n => Array(n).fill(0).map((_, k) => ({ x: 0, y: k / n, w: 1, h: 1 / n })) }
+            ],
+            6: [
+                { name: '6图网格', cols: 3, rows: 2, calc: () => [{ x: 0, y: 0, w: 1 / 3, h: 1 / 2 }, { x: 1 / 3, y: 0, w: 1 / 3, h: 1 / 2 }, { x: 2 / 3, y: 0, w: 1 / 3, h: 1 / 2 }, { x: 0, y: 1 / 2, w: 1 / 3, h: 1 / 2 }, { x: 1 / 3, y: 1 / 2, w: 1 / 3, h: 1 / 2 }, { x: 2 / 3, y: 1 / 2, w: 1 / 3, h: 1 / 2 }] },
+                { name: '横向长图', cols: 6, rows: 1, calc: n => Array(n).fill(0).map((_, k) => ({ x: k / n, y: 0, w: 1 / n, h: 1 })) },
+                { name: '竖向长图', cols: 1, rows: 6, calc: n => Array(n).fill(0).map((_, k) => ({ x: 0, y: k / n, w: 1, h: 1 / n })) }
+            ],
+            7: [
+                { name: '7图网格', cols: 3, rows: 3, calc: () => [{ x: 0, y: 0, w: 1 / 3, h: 1 / 3 }, { x: 1 / 3, y: 0, w: 1 / 3, h: 1 / 3 }, { x: 2 / 3, y: 0, w: 1 / 3, h: 1 / 3 }, { x: 0, y: 1 / 3, w: 1 / 3, h: 1 / 3 }, { x: 1 / 3, y: 1 / 3, w: 1 / 3, h: 1 / 3 }, { x: 0, y: 2 / 3, w: 1 / 3, h: 1 / 3 }, { x: 1 / 3, y: 2 / 3, w: 1 / 3, h: 1 / 3 }] },
+                { name: '横向长图', cols: 7, rows: 1, calc: n => Array(n).fill(0).map((_, k) => ({ x: k / n, y: 0, w: 1 / n, h: 1 })) },
+                { name: '竖向长图', cols: 1, rows: 7, calc: n => Array(n).fill(0).map((_, k) => ({ x: 0, y: k / n, w: 1, h: 1 / n })) }
+            ],
+            8: [
+                { name: '8图网格', cols: 4, rows: 2, calc: () => [{ x: 0, y: 0, w: 1 / 4, h: 1 / 2 }, { x: 1 / 4, y: 0, w: 1 / 4, h: 1 / 2 }, { x: 2 / 4, y: 0, w: 1 / 4, h: 1 / 2 }, { x: 3 / 4, y: 0, w: 1 / 4, h: 1 / 2 }, { x: 0, y: 1 / 2, w: 1 / 4, h: 1 / 2 }, { x: 1 / 4, y: 1 / 2, w: 1 / 4, h: 1 / 2 }, { x: 2 / 4, y: 1 / 2, w: 1 / 4, h: 1 / 2 }, { x: 3 / 4, y: 1 / 2, w: 1 / 4, h: 1 / 2 }] },
+                { name: '横向长图', cols: 8, rows: 1, calc: n => Array(n).fill(0).map((_, k) => ({ x: k / n, y: 0, w: 1 / n, h: 1 })) },
+                { name: '竖向长图', cols: 1, rows: 8, calc: n => Array(n).fill(0).map((_, k) => ({ x: 0, y: k / n, w: 1, h: 1 / n })) }
+            ],
+            9: [
+                { name: '九宫格', cols: 3, rows: 3, calc: () => [{ x: 0, y: 0, w: 1 / 3, h: 1 / 3 }, { x: 1 / 3, y: 0, w: 1 / 3, h: 1 / 3 }, { x: 2 / 3, y: 0, w: 1 / 3, h: 1 / 3 }, { x: 0, y: 1 / 3, w: 1 / 3, h: 1 / 3 }, { x: 1 / 3, y: 1 / 3, w: 1 / 3, h: 1 / 3 }, { x: 2 / 3, y: 1 / 3, w: 1 / 3, h: 1 / 3 }, { x: 0, y: 2 / 3, w: 1 / 3, h: 1 / 3 }, { x: 1 / 3, y: 2 / 3, w: 1 / 3, h: 1 / 3 }, { x: 2 / 3, y: 2 / 3, w: 1 / 3, h: 1 / 3 }] },
+                { name: '横向长图', cols: 9, rows: 1, calc: n => Array(n).fill(0).map((_, k) => ({ x: k / n, y: 0, w: 1 / n, h: 1 })) },
+                { name: '竖向长图', cols: 1, rows: 9, calc: n => Array(n).fill(0).map((_, k) => ({ x: 0, y: k / n, w: 1, h: 1 / n })) }
+            ]
+        };
+
+        function renderLayouts() {
+            const count = stitchImages.length;
+            layoutSelector.innerHTML = '';
+            if (count < 1) { layoutSelector.textContent = '请先上传图片'; currentLayout = null; return; }
+            const key = Math.min(count, 9);
+            const layouts = layoutTemplates[key] || layoutTemplates[4];
+            layouts.forEach((layout, idx) => {
+                const opt = document.createElement('div');
+                opt.className = 'layout-option ' + (idx === 0 ? 'active' : '');
+                const prev = document.createElement('div');
+                prev.className = 'layout-preview';
+                prev.style.gridTemplateColumns = 'repeat(' + layout.cols + ', 1fr)';
+                prev.style.gridTemplateRows = 'repeat(' + layout.rows + ', 1fr)';
+                for (let i = 0; i < count; i++) { const dot = document.createElement('div'); prev.appendChild(dot); }
+                opt.appendChild(prev);
+                opt.onclick = () => {
+                    document.querySelectorAll('.layout-option').forEach(e => e.classList.remove('active'));
+                    opt.classList.add('active');
+                    currentLayout = layout;
+                };
+                layoutSelector.appendChild(opt);
+            });
+            currentLayout = layouts[0];
+        }
+
+        function updateFitModeGroup() {
+            const w = parseInt(outWidthEl.value) || 0;
+            const h = parseInt(outHeightEl.value) || 0;
+            fitModeGroup.style.display = (w > 0 && h > 0) ? 'flex' : 'none';
+        }
+        outWidthEl.addEventListener('input', updateFitModeGroup);
+        outHeightEl.addEventListener('input', updateFitModeGroup);
+
+        fitModeBtns.forEach(btn => {
+            btn.onclick = () => {
+                const mode = btn.dataset.mode;
+                if (fitMode === mode) {
+                    fitMode = 'none';
+                    btn.classList.remove('active');
+                } else {
+                    fitMode = mode;
+                    fitModeBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+            };
+        });
+
+        stitchUploadArea.onclick = () => { stitchFileInput.value = ''; stitchFileInput.click(); };
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => { stitchUploadArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }); });
+        stitchUploadArea.ondrop = e => {
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length) addStitchImages(files);
+        };
+        stitchFileInput.onchange = e => addStitchImages(Array.from(e.target.files));
+
+        function addStitchImages(files) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    stitchImages.push({ id: Math.random(), url: e.target.result });
+                    updateStitchPreview();
+                    renderLayouts();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function updateStitchPreview() {
+            if (stitchImages.length === 0) {
+                stitchPreviewList.innerHTML = '<p style="width:100%;text-align:center;color:#888">暂无图片</p>';
+                return;
+            }
+            stitchPreviewList.innerHTML = '';
+            stitchImages.forEach(img => {
+                const item = document.createElement('div');
+                item.className = 'stitch-preview-item';
+                item.innerHTML = '<img src="' + img.url + '"><div class="remove-btn" data-id="' + img.id + '">×</div>';
+                stitchPreviewList.appendChild(item);
+            });
+        }
+
+        stitchPreviewList.onclick = e => {
+            if (e.target.classList.contains('remove-btn')) {
+                const id = parseFloat(e.target.dataset.id);
+                stitchImages = stitchImages.filter(i => i.id !== id);
+                updateStitchPreview();
+                renderLayouts();
+            }
+        };
+
+        stitchBtn.onclick = async () => {
+            if (stitchImages.length < 1) return alert('至少上传1张图片');
+            if (!currentLayout) return alert('请选择布局');
+            stitchResultBox.style.display = 'none';
+            stitchedImage.style.display = 'none';
+            stitchDownloadBtn.style.display = 'none';
+
+            try {
+                const imgs = await Promise.all(stitchImages.map(i => loadImg(i.url)));
+                const n = imgs.length;
+                const cells = currentLayout.calc(n);
+                const targetW = parseInt(outWidthEl.value) || 0;
+                const targetH = parseInt(outHeightEl.value) || 0;
+                const useCustom = targetW > 0 && targetH > 0;
+
+                const canvas2 = document.createElement('canvas');
+                const maxW = Math.max(...imgs.map(i => i.width));
+                const maxH = Math.max(...imgs.map(i => i.height));
+
+                if (useCustom) {
+                    canvas2.width = targetW;
+                    canvas2.height = targetH;
+                } else {
+                    if (layoutIsHorizontal(currentLayout)) {
+                        canvas2.width = imgs.reduce((s, i) => s + i.width, 0);
+                        canvas2.height = maxH;
+                    } else if (layoutIsVertical(currentLayout)) {
+                        canvas2.width = maxW;
+                        canvas2.height = imgs.reduce((s, i) => s + i.height, 0);
+                    } else {
+                        canvas2.width = maxW * 3;
+                        canvas2.height = maxH * 3;
+                    }
+                }
+
+                const ctx3 = canvas2.getContext('2d');
+                ctx3.fillStyle = '#fff';
+                ctx3.fillRect(0, 0, canvas2.width, canvas2.height);
+                const CW = canvas2.width, CH = canvas2.height;
+
+                imgs.forEach((img, i) => {
+                    const cell = cells[i];
+                    const x = cell.x * CW;
+                    const y = cell.y * CH;
+                    const w = cell.w * CW;
+                    const h = cell.h * CH;
+
+                    if (fitMode === 'stretch') {
+                        ctx3.drawImage(img, x, y, w, h);
+                    } else if (fitMode === 'cover') {
+                        const ratio = Math.max(w / img.width, h / img.height);
+                        const iw = img.width * ratio;
+                        const ih = img.height * ratio;
+                        const ix = x + (w - iw) / 2;
+                        const iy = y + (h - ih) / 2;
+                        ctx3.drawImage(img, ix, iy, iw, ih);
+                    } else {
+                        const ratio = Math.min(w / img.width, h / img.height);
+                        const iw = img.width * ratio;
+                        const ih = img.height * ratio;
+                        const ix = x + (w - iw) / 2;
+                        const iy = y + (h - ih) / 2;
+                        ctx3.drawImage(img, ix, iy, iw, ih);
+                    }
+                });
+
+                const fmt = stitchOutputFormat.value.toLowerCase();
+                if (fmt === 'pdf') {
+                    const { jsPDF } = jspdf;
+                    const pdf = new jsPDF({
+                        orientation: CW > CH ? 'landscape' : 'portrait',
+                        unit: 'px',
+                        format: [CW, CH]
+                    });
+                    pdf.addImage(canvas2.toDataURL('image/png'), 'PNG', 0, 0, CW, CH);
+                    stitchedUrl = pdf.output('bloburl');
+                    stitchResultBox.innerHTML = '<h3>PDF 拼接完成</h3><p>请下载查看</p>';
+                } else {
+                    stitchedUrl = canvas2.toDataURL('image/' + fmt, 0.95);
+                    stitchedImage.src = stitchedUrl;
+                    stitchedImage.style.display = 'block';
+                }
+                stitchResultBox.style.display = 'block';
+                stitchDownloadBtn.style.display = 'inline-block';
+            } catch (e) {
+                alert('拼接失败：' + e.message);
+            }
+        };
+
+        function layoutIsHorizontal(layout) { return layout.rows === 1; }
+        function layoutIsVertical(layout) { return layout.cols === 1; }
+
+        stitchDownloadBtn.onclick = () => {
+            const a = document.createElement('a');
+            a.href = stitchedUrl;
+            a.download = '拼接结果.' + stitchOutputFormat.value;
+            a.click();
+        };
+
+        function loadImg(url) {
+            return new Promise((res, rej) => {
+                const i = new Image();
+                i.onload = () => res(i);
+                i.onerror = rej;
+                i.src = url;
+            });
+        }
+
+        renderLayouts();
+        updateFitModeGroup();
+    </script>
+</body>
+</html>

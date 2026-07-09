@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片压缩（批量）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #09090b;
+            color: #f4f4f5;
+            line-height: 1.6;
+            overflow-y: auto;
+            -webkit-font-smoothing: antialiased;
+            background-image: linear-gradient(to bottom left, #242323, #131314, #000000);
+            background-attachment: fixed;
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        .bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(2px);
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        @keyframes fadeUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 640px;
+            background: rgba(24, 24, 27, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 16px;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            z-index: 1;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: #a1a1aa;
+            font-size: 15px;
+            margin-bottom: 20px;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover { color: #e4e4e7; }
+
+        .container h1 {
+            color: #e4e4e7;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .container > p {
+            color: #a1a1aa;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 10px;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.02);
+            text-align: center;
+            color: #a1a1aa;
+        }
+
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        #compressFileInput { display: none; }
+
+        .format-select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+            cursor: pointer;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1.2rem;
+            padding-right: 2.2rem;
+        }
+
+        .format-select:focus { outline: none; border-color: rgba(129, 140, 248, 0.5); }
+
+        .compress-btn, .download-btn {
+            padding: 12px 25px;
+            background: rgba(24, 24, 27, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .compress-btn:hover, .download-btn:hover {
+            background: rgba(39, 39, 42, 0.6);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .compress-btn:active, .download-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+        }
+
+        .result-box h3 { color: #e4e4e7; }
+
+        .contact-tip {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 15px;
+            color: #71717a;
+            line-height: 1.6;
+        }
+
+        .contact-tip strong { color: #818cf8; }
+
+        .compress-preview-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .compress-preview-item {
+            width: 100px;
+            height: 100px;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .compress-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .compress-preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            background: rgba(239, 68, 68, 0.7);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .compress-info {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 15px;
+            color: #a1a1aa;
+            line-height: 1.8;
+        }
+
+        .quality-slider {
+            width: 300px;
+            margin: 15px auto;
+            display: block;
+            accent-color: #818cf8;
+        }
+
+        .quality-text {
+            text-align: center;
+            font-size: 15px;
+            color: #818cf8;
+            margin-bottom: 10px;
+        }
+
+        .compress-result-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .compress-result-item {
+            width: 140px;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .compress-result-item img {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .compress-result-item .size-info {
+            font-size: 12px;
+            color: #27ae60;
+            margin-bottom: 6px;
+        }
+
+        .compress-result-item .download-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 0;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .quality-slider { width: 90%; }
+            body { padding: 20px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas" class="bg-canvas"></canvas>
+
+    <div class="container">
+        <a href="../index.html" class="back-link">&larr; 返回转换工具首页</a>
+        <h1>图片压缩（批量）</h1>
+        <p>支持批量图片压缩，可调节压缩质量，支持JPG/PNG/WebP</p>
+        <div class="upload-area" id="compressUploadArea">
+            <p>点击或拖拽上传多张图片</p>
+            <input type="file" id="compressFileInput" accept="image/*" multiple>
+        </div>
+
+        <div class="compress-preview-list" id="compressPreviewList">
+            <p style="color: #71717a; width: 100%; text-align: center;">暂无上传的图片</p>
+        </div>
+
+        <div class="compress-info">
+            <p>压缩质量：数值越小，体积越小，画质越低</p>
+        </div>
+        <div class="quality-text">当前质量：<span id="qualityValue">80</span>%</div>
+        <input type="range" min="10" max="100" value="80" class="quality-slider" id="qualitySlider">
+
+        <div style="text-align:center; margin:20px 0;">
+            <select class="format-select" id="compressFormat">
+                <option value="jpg">JPG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+            </select>
+            <button class="compress-btn" id="compressBtn">开始批量压缩</button>
+        </div>
+
+        <div class="result-box" id="compressResultBox">
+            <h3>批量压缩完成</h3>
+            <div class="compress-result-list" id="compressResultList"></div>
+        </div>
+
+        <div class="contact-tip">面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong></div>
+    </div>
+
+    <!-- 增强粒子背景 -->
+    <script>
+        (function () {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, mouseX = -9999, mouseY = -9999;
+
+            function resize() {
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = W;
+                canvas.height = H;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            document.addEventListener('mousemove', function (e) { mouseX = e.clientX; mouseY = e.clientY; });
+            document.addEventListener('mouseleave', function () { mouseX = -9999; mouseY = -9999; });
+
+            var GS = 8, PS = 6;
+            var WORM_COUNT = Math.floor((W * H) / 15000);
+            var DUST_COUNT = Math.floor((W * H) / 7000);
+
+            var PALETTE = [
+                'rgba(16, 185, 129, ',
+                'rgba(6, 182, 212, ',
+                'rgba(168, 85, 247, ',
+                'rgba(251, 146, 60, ',
+                'rgba(236, 72, 153, ',
+                'rgba(52, 211, 153, ',
+                'rgba(129, 140, 248, ',
+                'rgba(250, 204, 21, ',
+            ];
+
+            function rpick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+            var Worm = (function () {
+                function W() { this.init(true); }
+                W.prototype.init = function (pre) {
+                    this.x = Math.random() * (W / GS);
+                    this.y = Math.random() * (H / GS);
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.speed = Math.random() * 0.1 + 0.03;
+                    this.history = [];
+                    this.maxLen = Math.floor(Math.random() * 65 + 20);
+                    this.turn = (Math.random() - 0.5) * 0.035;
+                    this.color = rpick(PALETTE);
+                    this.glowColor = this.color.replace(')', '').replace('rgba', 'rgba');
+                    if (pre) { var n = Math.floor(Math.random() * this.maxLen); for (var i = 0; i < n; i++) this.update(true); }
+                };
+                W.prototype.update = function (isInit) {
+                    var fa = Math.sin(this.x * 0.035) * Math.cos(this.y * 0.035) * Math.PI * 2;
+                    var dx = mouseX / GS - this.x, dy = mouseY / GS - this.y;
+                    var d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 35 && d > 0) fa += Math.atan2(dy, dx) * (1 - d / 35) * 0.025;
+                    this.angle += (fa - this.angle) * 0.018 + this.turn;
+                    this.x += Math.cos(this.angle) * this.speed;
+                    this.y += Math.sin(this.angle) * this.speed;
+                    var gx = Math.floor(this.x), gy = Math.floor(this.y);
+                    if (this.history.length === 0 || this.history[this.history.length - 1].x !== gx || this.history[this.history.length - 1].y !== gy) {
+                        this.history.push({ x: gx, y: gy });
+                        if (this.history.length > this.maxLen) this.history.shift();
+                    }
+                    if (!isInit && (this.x < -15 || this.x > (W / GS) + 15 || this.y < -15 || this.y > (H / GS) + 15)) this.init();
+                };
+                W.prototype.draw = function (ctx) {
+                    if (this.history.length < 2) return;
+                    for (var i = 0; i < this.history.length; i++) {
+                        var pos = this.history[i], px = pos.x * GS, py = pos.y * GS;
+                        var alpha = 1, prog = i / this.history.length;
+                        if (prog > 0.8) alpha = (1 - prog) * 5;
+                        else if (prog < 0.2) alpha = prog * 5;
+                        if (i === this.history.length - 1) { ctx.shadowColor = this.glowColor + '0.5)'; ctx.shadowBlur = 5; }
+                        if (Math.random() > 0.96) alpha *= 0.15;
+                        ctx.fillStyle = this.color + alpha + ')';
+                        ctx.fillRect(px, py, PS, PS);
+                        ctx.shadowBlur = 0;
+                    }
+                };
+                return W;
+            })();
+
+            var Dust = (function () {
+                function D() {
+                    this.x = Math.random() * W;
+                    this.y = Math.random() * H;
+                    this.r = Math.random() * 2.2 + 0.8;
+                    this.vx = (Math.random() - 0.5) * 0.25;
+                    this.vy = (Math.random() - 0.5) * 0.25;
+                    this.alpha = Math.random() * 0.45 + 0.15;
+                    this.da = (Math.random() - 0.5) * 0.004;
+                    this.color = rpick(PALETTE);
+                }
+                D.prototype.update = function () {
+                    this.x += this.vx; this.y += this.vy;
+                    this.alpha += this.da;
+                    if (this.alpha > 0.65 || this.alpha < 0.04) this.da *= -1;
+                    if (this.x < -10) this.x = W + 10; if (this.x > W + 10) this.x = -10;
+                    if (this.y < -10) this.y = H + 10; if (this.y > H + 10) this.y = -10;
+                    var dx = this.x - mouseX, dy = this.y - mouseY;
+                    var d = Math.sqrt(dx * dx + dy * dy);
+                    if (d < 70 && d > 0) { this.x += (dx / d) * 0.35; this.y += (dy / d) * 0.35; }
+                };
+                D.prototype.draw = function (ctx) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color + this.alpha + ')';
+                    ctx.fill();
+                };
+                return D;
+            })();
+
+            var worms = Array.from({ length: WORM_COUNT }, function () { return new Worm(); });
+            var dusts = Array.from({ length: DUST_COUNT }, function () { return new Dust(); });
+
+            window.addEventListener('resize', function () {
+                var nc = Math.floor((window.innerWidth * window.innerHeight) / 15000);
+                var nd = Math.floor((window.innerWidth * window.innerHeight) / 7000);
+                while (worms.length < nc) worms.push(new Worm());
+                if (nc < worms.length) worms = worms.slice(0, nc);
+                while (dusts.length < nd) dusts.push(new Dust());
+                if (nd < dusts.length) dusts = dusts.slice(0, nd);
+            });
+
+            function drawConnections() {
+                var heads = [];
+                for (var i = 0; i < worms.length; i++) {
+                    if (worms[i].history.length === 0) continue;
+                    heads.push(worms[i].history[worms[i].history.length - 1]);
+                }
+                ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+                ctx.lineWidth = 0.5;
+                for (var i = 0; i < heads.length; i++) {
+                    var hx = heads[i].x * GS + PS / 2, hy = heads[i].y * GS + PS / 2;
+                    for (var j = i + 1; j < heads.length; j++) {
+                        var hx2 = heads[j].x * GS + PS / 2, hy2 = heads[j].y * GS + PS / 2;
+                        var dist = Math.sqrt((hx - hx2) * (hx - hx2) + (hy - hy2) * (hy - hy2));
+                        if (dist < 90) {
+                            ctx.globalAlpha = (1 - dist / 90) * 0.25;
+                            ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx2, hy2); ctx.stroke();
+                            ctx.globalAlpha = 1;
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, W, H);
+                for (var i = 0; i < dusts.length; i++) { dusts[i].update(); dusts[i].draw(ctx); }
+                for (var i = 0; i < worms.length; i++) { worms[i].update(); worms[i].draw(ctx); }
+                drawConnections();
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+    </script>
+
+    <script>
+        const compressUploadArea = document.getElementById('compressUploadArea');
+        const compressFileInput = document.getElementById('compressFileInput');
+        const compressPreviewList = document.getElementById('compressPreviewList');
+        const qualitySlider = document.getElementById('qualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const compressBtn = document.getElementById('compressBtn');
+        const compressFormat = document.getElementById('compressFormat');
+        const compressResultBox = document.getElementById('compressResultBox');
+        const compressResultList = document.getElementById('compressResultList');
+
+        let compressImages = [];
+        const MAX_SIZE = 2000;
+
+        qualitySlider.oninput = () => { qualityValue.textContent = qualitySlider.value; };
+
+        compressUploadArea.onclick = () => { compressFileInput.value = ''; compressFileInput.click(); };
+        compressFileInput.onchange = (e) => { addCompressImages(Array.from(e.target.files)); };
+        compressUploadArea.ondrop = (e) => {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length) addCompressImages(files);
+        };
+        ['dragenter', 'dragover', 'dragleave'].forEach(ev => {
+            compressUploadArea.addEventListener(ev, e => e.preventDefault());
+        });
+
+        function addCompressImages(files) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    compressImages.push({
+                        id: Math.random(),
+                        url: e.target.result,
+                        file: file,
+                        name: file.name.replace(/\.\w+$/, '')
+                    });
+                    updateCompressPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function updateCompressPreview() {
+            if (compressImages.length === 0) {
+                compressPreviewList.innerHTML = '<p style="width:100%;text-align:center;color:#888">暂无上传的图片</p>';
+                return;
+            }
+            compressPreviewList.innerHTML = '';
+            compressImages.forEach(img => {
+                const item = document.createElement('div');
+                item.className = 'compress-preview-item';
+                item.innerHTML = '<img src="' + img.url + '"><div class="remove-btn" data-id="' + img.id + '">×</div>';
+                compressPreviewList.appendChild(item);
+            });
+        }
+
+        compressPreviewList.onclick = (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                const id = parseFloat(e.target.dataset.id);
+                compressImages = compressImages.filter(i => i.id !== id);
+                updateCompressPreview();
+            }
+        };
+
+        compressBtn.onclick = async () => {
+            if (compressImages.length === 0) { alert('请先上传图片！'); return; }
+            compressResultBox.style.display = 'none';
+            compressResultList.innerHTML = '';
+
+            const quality = parseInt(qualitySlider.value) / 100;
+            const fmt = compressFormat.value.toLowerCase();
+
+            for (const item of compressImages) {
+                try {
+                    const img = new Image();
+                    img.src = item.url;
+                    await new Promise(r => img.onload = r);
+
+                    let w = img.width, h = img.height;
+                    if (w > MAX_SIZE || h > MAX_SIZE) {
+                        const ratio = Math.min(MAX_SIZE / w, MAX_SIZE / h);
+                        w = Math.floor(w * ratio);
+                        h = Math.floor(h * ratio);
+                    }
+
+                    const canvas3 = document.createElement('canvas');
+                    const ctx4 = canvas3.getContext('2d');
+                    canvas3.width = w;
+                    canvas3.height = h;
+                    ctx4.drawImage(img, 0, 0, w, h);
+
+                    const mime = fmt === 'png' ? 'image/png' : fmt === 'webp' ? 'image/webp' : 'image/jpeg';
+                    const blob = await new Promise(res => canvas3.toBlob(res, mime, quality));
+                    const compressedUrl = URL.createObjectURL(blob);
+                    const originalSize = (item.file.size / 1024).toFixed(1);
+                    const outputSize = (blob.size / 1024).toFixed(1);
+
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'compress-result-item';
+                    resultItem.innerHTML = '<img src="' + compressedUrl + '"><div class="size-info">' + originalSize + 'KB → ' + outputSize + 'KB</div><button class="download-btn" data-url="' + compressedUrl + '" data-name="' + item.name + '">下载</button>';
+                    compressResultList.appendChild(resultItem);
+                } catch (err) { console.error(err); }
+            }
+            compressResultBox.style.display = 'block';
+        };
+
+        compressResultList.onclick = (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const url = e.target.dataset.url;
+                const name = e.target.dataset.name;
+                const fmt = compressFormat.value;
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name + '-压缩.' + fmt;
+                a.click();
+            }
+        };
+    </script>
+</body>
+</html>
