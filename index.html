@@ -451,143 +451,166 @@
         </div>
     </footer>
 
-    <!-- 高性能前端 JS：生成生物感流体网格粒子 -->
+    <!-- 高性能前端 JS：生成 trae.ai 风格的地图点阵背景 -->
     <script>
         const canvas = document.getElementById('bg-canvas');
         const ctx = canvas.getContext('2d');
         let width, height;
+
+        // 网格步长（点阵间距）
+        const GRID_SIZE = 10;
+        // 实际绘制的像素方块大小
+        const PIXEL_SIZE = 5;
+        // 密度阈值：噪声值高于此才生成像素点（越高越稀疏）
+        const DENSITY_THRESHOLD = 0.42;
+        // 绿色热点区域中心（归一化坐标：0-1）
+        const HOT_CX = 0.45;
+        const HOT_CY = 0.35;
+        const HOT_RADIUS = 0.25;
+
+        // 所有像素单元
+        let cells = [];
+
+        // 二维伪随机哈希：sin 哈希法，避免 JS 位运算 32-bit 溢出
+        function hash2(ix, iy) {
+            const s = Math.sin(ix * 127.1 + iy * 311.7) * 43758.5453;
+            return s - Math.floor(s);
+        }
+        function smoothstep(t) {
+            return t * t * (3 - 2 * t);
+        }
+        function valueNoise(x, y) {
+            const ix = Math.floor(x);
+            const iy = Math.floor(y);
+            const fx = smoothstep(x - ix);
+            const fy = smoothstep(y - iy);
+            const a = hash2(ix, iy);
+            const b = hash2(ix + 1, iy);
+            const c = hash2(ix, iy + 1);
+            const d = hash2(ix + 1, iy + 1);
+            return (
+                a * (1 - fx) * (1 - fy) +
+                b * fx * (1 - fy) +
+                c * (1 - fx) * fy +
+                d * fx * fy
+            );
+        }
+        // 分形噪声：多层叠加，形成大陆状聚集
+        function fractalNoise(x, y) {
+            let sum = 0;
+            let amp = 1;
+            let freq = 1;
+            let norm = 0;
+            for (let i = 0; i < 4; i++) {
+                sum += valueNoise(x * freq, y * freq) * amp;
+                norm += amp;
+                amp *= 0.5;
+                freq *= 2;
+            }
+            return sum / norm;
+        }
+
+        // 单个像素单元：延迟 → 淡入 → 峰值 → 淡出 → 重生
+        class Cell {
+            constructor(x, y, isGreen) {
+                this.x = x;
+                this.y = y;
+                this.isGreen = isGreen;
+                this.reset(true);
+            }
+            reset(initial = false) {
+                this.phase = 0;
+                // 一次呼吸的总帧数
+                this.duration = 180 + Math.random() * 260;
+                // 首次亮起前的等待帧数（初始化随机分布，避免同步）
+                this.delay = initial
+                    ? Math.random() * 800
+                    : 200 + Math.random() * 1200;
+                // 峰值不透明度：绿色更醒目
+                this.peakAlpha = this.isGreen
+                    ? 0.4 + Math.random() * 0.35
+                    : 0.18 + Math.random() * 0.22;
+            }
+            update() {
+                if (this.delay > 0) {
+                    this.delay--;
+                    return;
+                }
+                this.phase++;
+                if (this.phase >= this.duration) {
+                    this.reset();
+                }
+            }
+            draw(ctx) {
+                if (this.delay > 0) return;
+                // 钟形曲线：sin(πt) 天然流畅的淡入淡出
+                const t = this.phase / this.duration;
+                const alpha = Math.sin(t * Math.PI) * this.peakAlpha;
+                if (alpha < 0.02) return;
+                ctx.fillStyle = this.isGreen
+                    ? `rgba(16, 185, 129, ${alpha})`
+                    : `rgba(170, 170, 178, ${alpha})`;
+                ctx.fillRect(this.x, this.y, PIXEL_SIZE, PIXEL_SIZE);
+            }
+        }
+
+        // 根据分形噪声掩膜生成像素点：模拟大陆状聚集
+        function buildCells() {
+            cells = [];
+            const cols = Math.floor(width / GRID_SIZE);
+            const rows = Math.floor(height / GRID_SIZE);
+            // 噪声采样缩放：值越小，"大陆"块越大
+            const noiseScale = 0.05;
+            // 首屏高度：作为垂直衰减参考
+            const viewH = window.innerHeight;
+
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    // 采样分形噪声作为密度掩膜
+                    const n = fractalNoise(i * noiseScale, j * noiseScale);
+
+                    // 垂直衰减：首屏顶部最密集，越往下越稀疏（但底部仍保留少量点）
+                    const py = j * GRID_SIZE;
+                    const vFade = Math.max(0.35, 1 - py / (viewH * 2.5));
+
+                    // 密度阈值判断
+                    if (n * vFade < DENSITY_THRESHOLD) continue;
+
+                    // 判断是否落在绿色热点区域内
+                    const nx = i / cols;
+                    const ny = j / rows;
+                    const dx = nx - HOT_CX;
+                    const dy = ny - HOT_CY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    // 越靠近热点中心，绿色概率越高
+                    const greenProb = Math.max(0, 1 - dist / HOT_RADIUS) * 0.55;
+                    const isGreen = Math.random() < greenProb;
+
+                    cells.push(new Cell(i * GRID_SIZE, j * GRID_SIZE, isGreen));
+                }
+            }
+        }
 
         function resize() {
             width = window.innerWidth;
             height = Math.max(document.documentElement.scrollHeight, window.innerHeight);
             canvas.width = width;
             canvas.height = height;
+            buildCells();
         }
         window.addEventListener('resize', resize);
-        // 监听滚动和内容变化，动态更新 canvas 高度
+        // 监听内容变化，动态更新 canvas 高度
         const ro = new ResizeObserver(() => resize());
         ro.observe(document.body);
         resize();
 
-        // 像素网格大小
-        const GRID_SIZE = 8;
-        // 实际绘制的方块大小 (留出间隙)
-        const PIXEL_SIZE = 6;
-        // 根据屏幕大小动态计算蠕虫数量，保证性能
-        let WORM_COUNT = Math.floor((width * height) / 12000); 
-
-        class Worm {
-            constructor() {
-                this.init(true);
-            }
-            init(randomizeLife = false) {
-                this.x = Math.random() * (width / GRID_SIZE);
-                this.y = Math.random() * (height / GRID_SIZE);
-                this.angle = Math.random() * Math.PI * 2; 
-                this.speed = (Math.random() * 0.15 + 0.05) * 1.2;
-                this.history = [];
-                // 蠕虫的长度（即粒子的尾巴长度）
-                this.maxLength = Math.floor(Math.random() * 80 + 30);
-                this.turnSpeed = (Math.random() - 0.5) * 0.05;
-                
-                // Trae.ai 风格的调色盘：亮绿、深绿、浅灰、深灰
-                const colors = [
-                    'rgba(16, 185, 129, ', // Emerald 500
-                    'rgba(5, 150, 105, ',  // Emerald 600
-                    'rgba(113, 113, 122, ', // Zinc 500
-                    'rgba(63, 63, 70, '     // Zinc 700
-                ];
-                this.color = colors[Math.floor(Math.random() * colors.length)];
-                
-                if (randomizeLife) {
-                    let preFill = Math.floor(Math.random() * this.maxLength);
-                    for(let i=0; i<preFill; i++) {
-                        this.update(true);
-                    }
-                }
-            }
-            update(isInit = false) {
-                // 超出屏幕后进入"死亡"状态：不再新增头部，逐帧缩减尾部，自然淡出后重生
-                if (!isInit && (this.x < -15 || this.x > (width / GRID_SIZE) + 15 || this.y < -15 || this.y > (height / GRID_SIZE) + 15)) {
-                    if (this.history.length > 0) {
-                        this.history.shift(); // 逐帧移除尾部，让拖尾自然消失
-                    } else {
-                        this.init();
-                    }
-                    return;
-                }
-
-                // 核心：使用简单的正弦/余弦流场模拟生物群游的路径
-                let flowAngle = Math.sin(this.x * 0.05) * Math.cos(this.y * 0.05) * Math.PI * 2;
-                // 缓动跟随流场
-                this.angle += (flowAngle - this.angle) * 0.02 + this.turnSpeed;
-                
-                this.x += Math.cos(this.angle) * this.speed;
-                this.y += Math.sin(this.angle) * this.speed;
-                
-                let gx = Math.floor(this.x);
-                let gy = Math.floor(this.y);
-                
-                // 只有当跨越到新的网格时才记录，形成像素化的移动感
-                if (this.history.length === 0 || this.history[this.history.length-1].x !== gx || this.history[this.history.length-1].y !== gy) {
-                    this.history.push({x: gx, y: gy});
-                    if (this.history.length > this.maxLength) {
-                        this.history.shift();
-                    }
-                }
-            }
-            draw(ctx) {
-                for (let i = 0; i < this.history.length; i++) {
-                    const pos = this.history[i];
-                    const px = pos.x * GRID_SIZE;
-                    const py = pos.y * GRID_SIZE;
-                    
-                    let alpha = 0;
-                    const progress = i / this.history.length;
-                    
-                    // 模拟蠕虫的首尾淡入淡出，形成生物流动的质感
-                    if (progress > 0.8) {
-                        alpha = (1 - progress) * 5; // 头部渐显
-                    } else if (progress < 0.2) {
-                        alpha = progress * 5; // 尾部渐隐
-                    } else {
-                        alpha = 1;
-                    }
-                    
-                    // 偶尔的像素闪烁，增加科技感
-                    if (Math.random() > 0.98) alpha *= 0.3;
-
-                    ctx.fillStyle = this.color + alpha + ')';
-                    ctx.fillRect(px, py, PIXEL_SIZE, PIXEL_SIZE);
-                }
-            }
-        }
-
-        let worms = Array.from({length: WORM_COUNT}, () => new Worm());
-
-        // 响应式调整粒子数量
-        function adjustWormCount() {
-            let newCount = Math.floor((width * height) / 12000);
-            if (newCount > worms.length) {
-                for(let i=0; i<newCount - worms.length; i++) worms.push(new Worm());
-            } else {
-                worms = worms.slice(0, newCount);
-            }
-        }
-        const origResize = resize;
-        resize = function() {
-            origResize();
-            adjustWormCount();
-        };
-
         // 渲染循环
         function animate() {
-            // 清空画布，不保留拖影，因为历史轨迹已在Worm内部记录
             ctx.clearRect(0, 0, width, height);
-            worms.forEach(worm => {
-                worm.update();
-                worm.draw(ctx);
-            });
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].update();
+                cells[i].draw(ctx);
+            }
             requestAnimationFrame(animate);
         }
         animate();
