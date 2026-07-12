@@ -2,6 +2,17 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <script>
+        (function() {
+            var ua = navigator.userAgent || navigator.vendor || window.opera;
+            // 检测是否为手机或平板
+            var isMobile = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|webOS/i.test(ua);
+            var isTablet = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua) || (/(?:Macintosh|Windows)/i.test(ua) && 'ontouchend' in document && window.innerWidth <= 1024);
+            if ((isMobile || isTablet) && window.location.pathname.indexOf('mobile.html') === -1) {
+                window.location.replace('./mobile.html');
+            }
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>工具箱 | PC-TOOL</title>
     <style>
@@ -358,7 +369,7 @@
             </div>
             <div class="notice-content">
                 <p>为人民服务 不收一分钱 只为爱发电</p>
-                <p><strong>公告：新增一些新的工具 UI大改</strong></p>
+                <p><strong>公告：优化手机版UI</strong></p>
             </div>
         </section>
 
