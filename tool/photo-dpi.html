@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>图片DPI修改器 - 简洁稳定版</title>
+    <title>图片DPI修改器</title>
     <link rel="icon" type="image/png" href="../favicon.png">
+    <meta name="description" content="免费在线图片DPI修改工具，调整图片DPI像素不变，支持自定义DPI值，一键下载，纯浏览器端处理。">
+    <link rel="stylesheet" href="common.css">
     <!-- OGP 社交分享标签 -->
     <meta property="og:title" content="图片DPI修改器 | PC-TOOL">
     <meta property="og:description" content="免费在线工具集合——图片转换、视频压缩、音频转格式、图片抠图……每一个功能都为效率而生，完全免费，为人民服务！">
@@ -14,65 +16,6 @@
     <meta property="og:site_name" content="PC-TOOL">
     <meta property="og:locale" content="zh_CN">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #09090b;
-            color: #f4f4f5;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            background-image: linear-gradient(to bottom left, #242323, #131314, #000000);
-            background-attachment: fixed;
-            position: relative;
-            padding: 20px;
-        }
-
-        .bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            pointer-events: none;
-            filter: blur(2px);
-        }
-
-        a { text-decoration: none; color: inherit; }
-
-        @keyframes fadeUp {
-            from { transform: translateY(10px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .back-link {
-            position: fixed;
-            top: 20px;
-            left: 24px;
-            font-size: 15px;
-            color: #a1a1aa;
-            transition: color 0.3s;
-            z-index: 10;
-        }
-
-        .back-link:hover {
-            color: #e4e4e7;
-        }
-
         .card {
             width: 100%;
             max-width: 560px;
@@ -85,10 +28,6 @@
             animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        .inner {
-            /* inner wrapper kept for compatibility */;
-        }
-
         .title-section {
             text-align: center;
             margin-bottom: 1.5rem;
@@ -99,7 +38,6 @@
             font-size: 28px;
             font-weight: 700;
             background: none;
-            -webkit-background-clip: unset;
         }
         .title-section p {
             color: #a1a1aa;
@@ -318,32 +256,18 @@
             color: #52525b;
             padding: 1.2rem 0 0;
         }
-
-        .contact-tip {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 15px;
-            color: #71717a;
-            line-height: 1.6;
-        }
-
-        .contact-tip strong { color: #818cf8; }
-
-        @media (max-width: 500px) {
-            .card { padding: 24px; }
-            .dpi-panel { flex-direction: column; align-items: stretch; }
-            .preset-group { justify-content: flex-start; }
-        }
     </style>
 </head>
 <body>
+    <script>
+        (function(){var u=navigator.userAgent||navigator.vendor||window.opera;var m=/Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|webOS/i.test(u);var t=/iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(u)||(/(?:Macintosh|Windows)/i.test(u)&&'ontouchend' in document&&window.innerWidth<=1024);if((m||t)&&window.location.pathname.indexOf('mobile.html')===-1)window.location.replace('../mobile.html');})();
+    </script>
     <canvas id="bg-canvas" class="bg-canvas"></canvas>
 
-    <a href="../../index.html" class="back-link">← 返回转换工具首页</a>
+    <a href="../index.html" class="back-link">← 返回转换工具首页</a>
 
 <div class="card">
-    <div class="inner">
-        <div class="title-section">
+    <div class="title-section">
             <h1>DPI 调节器</h1>
             <p>调整图片DPI · 像素不变 · 一键下载</p>
         </div>
@@ -390,168 +314,12 @@
             ※ 基于原始像素重新生成图片，同时写入DPI打印信息。<br>
             - 适用于打印、排版、文档嵌入，保持原图清晰度不变。
         </div>
-    </div>
     <footer>修改DPI元数据 / 像素尺寸无变化</footer>
 
         <div class="contact-tip">面向大众，有任何想要的功能或者意见，请联系QQ：<strong>1003294905</strong></div>
 </div>
 
-<!-- 增强粒子背景 -->
-<script>
-    (function () {
-        const canvas = document.getElementById('bg-canvas');
-        const ctx = canvas.getContext('2d');
-        let W, H, mouseX = -9999, mouseY = -9999;
-
-        function resize() {
-            W = window.innerWidth;
-            H = window.innerHeight;
-            canvas.width = W;
-            canvas.height = H;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        document.addEventListener('mousemove', function (e) { mouseX = e.clientX; mouseY = e.clientY; });
-        document.addEventListener('mouseleave', function () { mouseX = -9999; mouseY = -9999; });
-
-        var GS = 8, PS = 6;
-        var WORM_COUNT = Math.floor((W * H) / 15000);
-        var DUST_COUNT = Math.floor((W * H) / 7000);
-
-        var PALETTE = [
-            'rgba(16, 185, 129, ',
-            'rgba(6, 182, 212, ',
-            'rgba(168, 85, 247, ',
-            'rgba(251, 146, 60, ',
-            'rgba(236, 72, 153, ',
-            'rgba(52, 211, 153, ',
-            'rgba(129, 140, 248, ',
-            'rgba(250, 204, 21, ',
-        ];
-
-        function rpick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-        var Worm = (function () {
-            function W() { this.init(true); }
-            W.prototype.init = function (pre) {
-                this.x = Math.random() * (W / GS);
-                this.y = Math.random() * (H / GS);
-                this.angle = Math.random() * Math.PI * 2;
-                this.speed = Math.random() * 0.1 + 0.03;
-                this.history = [];
-                this.maxLen = Math.floor(Math.random() * 65 + 20);
-                this.turn = (Math.random() - 0.5) * 0.035;
-                this.color = rpick(PALETTE);
-                this.glowColor = this.color.replace(')', '').replace('rgba', 'rgba');
-                if (pre) { var n = Math.floor(Math.random() * this.maxLen); for (var i = 0; i < n; i++) this.update(true); }
-            };
-            W.prototype.update = function (isInit) {
-                var fa = Math.sin(this.x * 0.035) * Math.cos(this.y * 0.035) * Math.PI * 2;
-                var dx = mouseX / GS - this.x, dy = mouseY / GS - this.y;
-                var d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 35 && d > 0) fa += Math.atan2(dy, dx) * (1 - d / 35) * 0.025;
-                this.angle += (fa - this.angle) * 0.018 + this.turn;
-                this.x += Math.cos(this.angle) * this.speed;
-                this.y += Math.sin(this.angle) * this.speed;
-                var gx = Math.floor(this.x), gy = Math.floor(this.y);
-                if (this.history.length === 0 || this.history[this.history.length - 1].x !== gx || this.history[this.history.length - 1].y !== gy) {
-                    this.history.push({ x: gx, y: gy });
-                    if (this.history.length > this.maxLen) this.history.shift();
-                }
-                if (!isInit && (this.x < -15 || this.x > (W / GS) + 15 || this.y < -15 || this.y > (H / GS) + 15)) this.init();
-            };
-            W.prototype.draw = function (ctx) {
-                if (this.history.length < 2) return;
-                for (var i = 0; i < this.history.length; i++) {
-                    var pos = this.history[i], px = pos.x * GS, py = pos.y * GS;
-                    var alpha = 1, prog = i / this.history.length;
-                    if (prog > 0.8) alpha = (1 - prog) * 5;
-                    else if (prog < 0.2) alpha = prog * 5;
-                    if (i === this.history.length - 1) { ctx.shadowColor = this.glowColor + '0.5)'; ctx.shadowBlur = 5; }
-                    if (Math.random() > 0.96) alpha *= 0.15;
-                    ctx.fillStyle = this.color + alpha + ')';
-                    ctx.fillRect(px, py, PS, PS);
-                    ctx.shadowBlur = 0;
-                }
-            };
-            return W;
-        })();
-
-        var Dust = (function () {
-            function D() {
-                this.x = Math.random() * W;
-                this.y = Math.random() * H;
-                this.r = Math.random() * 2.2 + 0.8;
-                this.vx = (Math.random() - 0.5) * 0.25;
-                this.vy = (Math.random() - 0.5) * 0.25;
-                this.alpha = Math.random() * 0.45 + 0.15;
-                this.da = (Math.random() - 0.5) * 0.004;
-                this.color = rpick(PALETTE);
-            }
-            D.prototype.update = function () {
-                this.x += this.vx; this.y += this.vy;
-                this.alpha += this.da;
-                if (this.alpha > 0.65 || this.alpha < 0.04) this.da *= -1;
-                if (this.x < -10) this.x = W + 10; if (this.x > W + 10) this.x = -10;
-                if (this.y < -10) this.y = H + 10; if (this.y > H + 10) this.y = -10;
-                var dx = this.x - mouseX, dy = this.y - mouseY;
-                var d = Math.sqrt(dx * dx + dy * dy);
-                if (d < 70 && d > 0) { this.x += (dx / d) * 0.35; this.y += (dy / d) * 0.35; }
-            };
-            D.prototype.draw = function (ctx) {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                ctx.fillStyle = this.color + this.alpha + ')';
-                ctx.fill();
-            };
-            return D;
-        })();
-
-        var worms = Array.from({ length: WORM_COUNT }, function () { return new Worm(); });
-        var dusts = Array.from({ length: DUST_COUNT }, function () { return new Dust(); });
-
-        window.addEventListener('resize', function () {
-            var nc = Math.floor((window.innerWidth * window.innerHeight) / 15000);
-            var nd = Math.floor((window.innerWidth * window.innerHeight) / 7000);
-            while (worms.length < nc) worms.push(new Worm());
-            if (nc < worms.length) worms = worms.slice(0, nc);
-            while (dusts.length < nd) dusts.push(new Dust());
-            if (nd < dusts.length) dusts = dusts.slice(0, nd);
-        });
-
-        function drawConnections() {
-            var heads = [];
-            for (var i = 0; i < worms.length; i++) {
-                if (worms[i].history.length === 0) continue;
-                heads.push(worms[i].history[worms[i].history.length - 1]);
-            }
-            ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-            ctx.lineWidth = 0.5;
-            for (var i = 0; i < heads.length; i++) {
-                var hx = heads[i].x * GS + PS / 2, hy = heads[i].y * GS + PS / 2;
-                for (var j = i + 1; j < heads.length; j++) {
-                    var hx2 = heads[j].x * GS + PS / 2, hy2 = heads[j].y * GS + PS / 2;
-                    var dist = Math.sqrt((hx - hx2) * (hx - hx2) + (hy - hy2) * (hy - hy2));
-                    if (dist < 90) {
-                        ctx.globalAlpha = (1 - dist / 90) * 0.25;
-                        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx2, hy2); ctx.stroke();
-                        ctx.globalAlpha = 1;
-                    }
-                }
-            }
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, W, H);
-            for (var i = 0; i < dusts.length; i++) { dusts[i].update(); dusts[i].draw(ctx); }
-            for (var i = 0; i < worms.length; i++) { worms[i].update(); worms[i].draw(ctx); }
-            drawConnections();
-            requestAnimationFrame(animate);
-        }
-        animate();
-    })();
-</script>
+<script src="common.js"></script>
 
 <script>
     (function(){
@@ -571,6 +339,7 @@
         let processedBlob = null;          // 修改DPI后的图片blob
         let processedUrl = null;           // 修改后的预览url
         let originalWidth = 0, originalHeight = 0;  // 记录原始像素尺寸
+        let sourceFileName = '';
 
         // 释放url资源
         function revokeUrls() {
@@ -616,7 +385,6 @@
             imgTmp.onload = () => {
                 originalWidth = imgTmp.width;
                 originalHeight = imgTmp.height;
-                console.log(`原始图片尺寸: ${originalWidth} x ${originalHeight} 像素`);
             };
             imgTmp.src = url;
         }
@@ -633,6 +401,7 @@
                 return;
             }
             originalFile = file;
+            sourceFileName = file.name.replace(/\.[^.]+$/, '');
             // 清空之前的修改状态
             revokeUrls();
             showOriginalPreview(file);
@@ -742,82 +511,140 @@
             });
         }
 
-        // 为 JPEG 写入 DPI 元数据 (稳定可靠版：重写APP0段或创建JFIF)
+        // 构建含正确DPI的EXIF APP1段（Windows/主流软件从EXIF读取DPI）
+        function buildExifApp1(dpi) {
+            const dpiVal = Math.min(65535, Math.max(1, dpi));
+            // TIFF 数据 (little-endian): 66字节
+            const tiff = new Uint8Array(66);
+            let p = 0;
+            // 字节序 "II" + 魔数 0x002A
+            tiff[p++]=0x49;tiff[p++]=0x49;tiff[p++]=0x2A;tiff[p++]=0x00;
+            // IFD0 偏移量 = 8
+            tiff[p++]=0x08;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // IFD0 条目数 = 3
+            tiff[p++]=0x03;tiff[p++]=0x00;
+            // 条目1: XResolution (0x011A), RATIONAL, count=1, value@offset 50
+            tiff[p++]=0x1A;tiff[p++]=0x01;tiff[p++]=0x05;tiff[p++]=0x00;
+            tiff[p++]=0x01;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            tiff[p++]=0x32;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // 条目2: YResolution (0x011B), RATIONAL, count=1, value@offset 58
+            tiff[p++]=0x1B;tiff[p++]=0x01;tiff[p++]=0x05;tiff[p++]=0x00;
+            tiff[p++]=0x01;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            tiff[p++]=0x3A;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // 条目3: ResolutionUnit (0x0128), SHORT, count=1, value=2 (英寸)
+            tiff[p++]=0x28;tiff[p++]=0x01;tiff[p++]=0x03;tiff[p++]=0x00;
+            tiff[p++]=0x01;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            tiff[p++]=0x02;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // 下一个IFD偏移量 = 0 (无更多IFD)
+            tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // XResolution 有理数: DPI / 1 (4+4字节, offset 50)
+            tiff[p++]=dpiVal&0xFF;tiff[p++]=(dpiVal>>8)&0xFF;
+            tiff[p++]=(dpiVal>>16)&0xFF;tiff[p++]=(dpiVal>>24)&0xFF;
+            tiff[p++]=0x01;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // YResolution 有理数: DPI / 1 (4+4字节, offset 58)
+            tiff[p++]=dpiVal&0xFF;tiff[p++]=(dpiVal>>8)&0xFF;
+            tiff[p++]=(dpiVal>>16)&0xFF;tiff[p++]=(dpiVal>>24)&0xFF;
+            tiff[p++]=0x01;tiff[p++]=0x00;tiff[p++]=0x00;tiff[p++]=0x00;
+            // 组装 APP1: FF E1 + 长度(2) + "Exif\0\0"(6) + TIFF数据(66)
+            const app1Len = 2 + 6 + 66; // 长度字段后面的数据总长 = 74
+            const app1 = new Uint8Array(2 + app1Len); // 76字节含标记
+            app1[0]=0xFF;app1[1]=0xE1;
+            app1[2]=(app1Len>>8)&0xFF;app1[3]=app1Len&0xFF;
+            app1[4]=0x45;app1[5]=0x78;app1[6]=0x69;app1[7]=0x66;app1[8]=0x00;app1[9]=0x00;
+            app1.set(tiff, 10);
+            return app1;
+        }
+        // 构建含正确DPI的JFIF APP0段（兼容性保障）
+        function buildJfifApp0(dpi) {
+            const dpiVal = Math.min(65535, Math.max(1, dpi));
+            const app0 = new Uint8Array(18);
+            app0[0]=0xFF;app0[1]=0xE0;
+            app0[2]=0x00;app0[3]=0x10; // 长度16
+            app0[4]=0x4A;app0[5]=0x46;app0[6]=0x49;app0[7]=0x46;app0[8]=0x00; // "JFIF\0"
+            app0[9]=0x01;app0[10]=0x02; // 版本1.2
+            app0[11]=0x01; // 单位: dpi
+            app0[12]=(dpiVal>>8)&0xFF;app0[13]=dpiVal&0xFF; // X密度
+            app0[14]=(dpiVal>>8)&0xFF;app0[15]=dpiVal&0xFF; // Y密度
+            app0[16]=0x00;app0[17]=0x00; // 无缩略图
+            return app0;
+        }
+        // 为 JPEG 写入DPI：剥离旧APP0/APP1，插入含EXIF DPI的新段
         function embedDpiToJPEG(blob, dpi) {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
-                    let buffer = ev.target.result;
-                    let data = new Uint8Array(buffer);
-                    // 寻找 SOI (0xFF 0xD8)
-                    if (data[0] !== 0xFF || data[1] !== 0xD8) {
-                        // 不是标准JPEG，直接原样返回
-                        return resolve(blob);
-                    }
-                    let offset = 2;
-                    let jfifFound = false;
-                    let existingApp0Offset = -1;
-                    let existingApp0Len = 0;
-                    while (offset < data.length - 5) {
-                        if (data[offset] !== 0xFF) break;
-                        let marker = data[offset+1];
-                        let segmentLen = (data[offset+2] << 8) | data[offset+3];
-                        if (marker === 0xE0) {  // APP0
-                            if (existingApp0Offset < 0) {
-                                existingApp0Offset = offset;
-                                existingApp0Len = 2 + segmentLen;
-                            }
-                            // JFIF标识符从offset+4开始: "JFIF\0" 共5字节
-                            if (offset+8 < data.length && 
-                                data[offset+4] === 0x4A && data[offset+5] === 0x46 && 
-                                data[offset+6] === 0x49 && data[offset+7] === 0x46 &&
-                                data[offset+8] === 0x00) {
-                                // 修改密度单位及X/Y密度
-                                let unitsOffset = offset + 11;     // 跳过标记(2)+长度(2)+标识(5)+版本(2)
-                                let xOffset = unitsOffset + 1;
-                                let yOffset = xOffset + 2;
-                                if (unitsOffset < data.length) {
-                                    data[unitsOffset] = 1; // 单位：英寸
-                                    let dpiVal = Math.min(65535, Math.max(1, dpi));
-                                    data[xOffset] = (dpiVal >> 8) & 0xFF;
-                                    data[xOffset+1] = dpiVal & 0xFF;
-                                    data[yOffset] = (dpiVal >> 8) & 0xFF;
-                                    data[yOffset+1] = dpiVal & 0xFF;
-                                    jfifFound = true;
-                                }
-                            }
-                            break;
+                    try {
+                        const data = new Uint8Array(ev.target.result);
+                        if (data.length < 2 || data[0] !== 0xFF || data[1] !== 0xD8) {
+                            return resolve(blob);
                         }
-                        offset += (2 + segmentLen);
-                        if (offset >= data.length) break;
-                    }
-                    if (!jfifFound) {
-                        // 插入完整的 JFIF APP0 段
-                        const newAPP0 = new Uint8Array(18);
-                        newAPP0[0] = 0xFF; newAPP0[1] = 0xE0;
-                        newAPP0[2] = 0x00; newAPP0[3] = 0x10; // length 16
-                        newAPP0[4] = 0x4A; newAPP0[5] = 0x46; newAPP0[6] = 0x49; newAPP0[7] = 0x46; newAPP0[8] = 0x00;
-                        newAPP0[9] = 0x01; newAPP0[10] = 0x02; // version 1.2
-                        newAPP0[11] = 0x01; // 单位 inch
-                        let dpiVal = Math.min(65535, Math.max(1, dpi));
-                        newAPP0[12] = (dpiVal >> 8) & 0xFF; newAPP0[13] = dpiVal & 0xFF;
-                        newAPP0[14] = (dpiVal >> 8) & 0xFF; newAPP0[15] = dpiVal & 0xFF;
-                        newAPP0[16] = 0x00; newAPP0[17] = 0x00;
-                        // 如果已有非JFIF的APP0，则跳过它；否则从SOI后插入
-                        let insertPos = (existingApp0Offset >= 0) ? existingApp0Offset + existingApp0Len : 2;
-                        let headSize = insertPos;
-                        let tailSize = data.length - headSize;
-                        const newData = new Uint8Array(headSize + newAPP0.length + tailSize);
-                        newData.set(data.slice(0, headSize), 0);
-                        newData.set(newAPP0, headSize);
-                        newData.set(data.slice(headSize), headSize + newAPP0.length);
-                        data = newData;
-                    }
-                    resolve(new Blob([data], { type: 'image/jpeg' }));
+                        const exifSeg = buildExifApp1(dpi);
+                        const jfifSeg = buildJfifApp0(dpi);
+                        // 解析JPEG段，跳过旧的APP0/APP1
+                        const keepSegs = [];
+                        let off = 2;
+                        while (off < data.length - 1) {
+                            if (data[off] !== 0xFF) { keepSegs.push(data.slice(off)); break; }
+                            const marker = data[off + 1];
+                            if (marker === 0x00 || marker === 0xFF) { off++; continue; }
+                            if (marker === 0xD9) { keepSegs.push(data.slice(off, off + 2)); break; }
+                            if (marker === 0xDA) { // SOS: 标头之后是压缩数据，需找到EOI
+                                const sosLen = ((data[off+2]<<8)|data[off+3]) + 2;
+                                const sosEnd = off + sosLen;
+                                keepSegs.push(data.slice(off, sosEnd));
+                                let eoi = sosEnd;
+                                while (eoi < data.length - 1) {
+                                    if (data[eoi] === 0xFF && data[eoi + 1] === 0xD9) break;
+                                    eoi++;
+                                }
+                                if (eoi < data.length - 1) {
+                                    keepSegs.push(data.slice(sosEnd, eoi + 2));
+                                } else {
+                                    keepSegs.push(data.slice(sosEnd));
+                                }
+                                break;
+                            }
+                            const segLen = ((data[off+2]<<8)|data[off+3]) + 2;
+                            if (marker === 0xE0 || marker === 0xE1) {
+                                off += segLen; // 跳过旧APP0/APP1
+                                continue;
+                            }
+                            if (segLen < 2 || off + segLen > data.length) { keepSegs.push(data.slice(off)); break; }
+                            keepSegs.push(data.slice(off, off + segLen));
+                            off += segLen;
+                        }
+                        // 组装: SOI + EXIF(APP1) + JFIF(APP0) + 保留的段
+                        const parts = [data.slice(0, 2), exifSeg, jfifSeg].concat(keepSegs);
+                        const total = parts.reduce(function(s,p){return s+p.length;}, 0);
+                        const out = new Uint8Array(total);
+                        let pos = 0;
+                        for (var i = 0; i < parts.length; i++) { out.set(parts[i], pos); pos += parts[i].length; }
+                        resolve(new Blob([out], { type: 'image/jpeg' }));
+                    } catch (e) { resolve(blob); }
                 };
-                reader.onerror = () => reject(new Error('读取JPEG失败'));
+                reader.onerror = function() { resolve(blob); };
                 reader.readAsArrayBuffer(blob);
             });
+        }
+
+        // CRC32 计算函数 (PNG 校验用)
+        function crc32(data, typeStr) {
+            var table = [];
+            for (var n = 0; n < 256; n++) {
+                var c = n;
+                for (var k = 0; k < 8; k++) {
+                    c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+                }
+                table[n] = c;
+            }
+            var bytes = [];
+            for (var i = 0; i < typeStr.length; i++) bytes.push(typeStr.charCodeAt(i));
+            for (var j = 0; j < data.length; j++) bytes.push(data[j]);
+            var crc = 0xFFFFFFFF;
+            for (var r = 0; r < bytes.length; r++) {
+                crc = table[(crc ^ bytes[r]) & 0xFF] ^ (crc >>> 8);
+            }
+            return (crc ^ 0xFFFFFFFF) >>> 0;
         }
 
         // 为 PNG 写入 pHYs chunk (每米像素)
@@ -825,53 +652,69 @@
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
-                    let data = new Uint8Array(ev.target.result);
-                    // PNG 签名校验
-                    const pngSig = [137,80,78,71,13,10,26,10];
-                    for (let i=0; i<8; i++) if (data[i] !== pngSig[i]) return resolve(blob);
-                    let offset = 8;
-                    let modified = false;
-                    while (offset < data.length - 12) {
-                        let len = (data[offset]<<24)|(data[offset+1]<<16)|(data[offset+2]<<8)|data[offset+3];
-                        let type = String.fromCharCode(data[offset+4], data[offset+5], data[offset+6], data[offset+7]);
-                        if (type === 'pHYs') {
-                            // 每米像素 = DPI * 39.3701
-                            let ppm = Math.round(dpi * 39.3701);
-                            data[offset+8] = (ppm >> 24) & 0xFF;
-                            data[offset+9] = (ppm >> 16) & 0xFF;
-                            data[offset+10] = (ppm >> 8) & 0xFF;
-                            data[offset+11] = ppm & 0xFF;
-                            data[offset+12] = (ppm >> 24) & 0xFF;
-                            data[offset+13] = (ppm >> 16) & 0xFF;
-                            data[offset+14] = (ppm >> 8) & 0xFF;
-                            data[offset+15] = ppm & 0xFF;
-                            modified = true;
-                            break;
+                    try {
+                        const data = new Uint8Array(ev.target.result);
+                        const pngSig = [137,80,78,71,13,10,26,10];
+                        if (data.length < 33) return resolve(blob);
+                        for (let i = 0; i < 8; i++) if (data[i] !== pngSig[i]) return resolve(blob);
+                        let offset = 8;
+                        let modified = false;
+                        while (offset < data.length - 12) {
+                            const len = (data[offset]<<24)|(data[offset+1]<<16)|(data[offset+2]<<8)|data[offset+3];
+                            if (offset + 12 + len > data.length) break;
+                            const type = String.fromCharCode(data[offset+4], data[offset+5], data[offset+6], data[offset+7]);
+                            if (type === 'pHYs' && len === 9) {
+                                const ppm = Math.round(dpi * 39.3701);
+                                data[offset+8]  = (ppm >> 24) & 0xFF;
+                                data[offset+9]  = (ppm >> 16) & 0xFF;
+                                data[offset+10] = (ppm >> 8) & 0xFF;
+                                data[offset+11] = ppm & 0xFF;
+                                data[offset+12] = (ppm >> 24) & 0xFF;
+                                data[offset+13] = (ppm >> 16) & 0xFF;
+                                data[offset+14] = (ppm >> 8) & 0xFF;
+                                data[offset+15] = ppm & 0xFF;
+                                // 更新 CRC
+                                const physData = data.slice(offset+8, offset+17);
+                                const newCrc = crc32(physData, 'pHYs');
+                                data[offset+17] = (newCrc >> 24) & 0xFF;
+                                data[offset+18] = (newCrc >> 16) & 0xFF;
+                                data[offset+19] = (newCrc >> 8) & 0xFF;
+                                data[offset+20] = newCrc & 0xFF;
+                                modified = true;
+                                break;
+                            }
+                            offset += (12 + len);
                         }
-                        offset += (12 + len);
-                        if (offset >= data.length) break;
+                        if (!modified) {
+                            const ihdrLen = (data[8]<<24)|(data[9]<<16)|(data[10]<<8)|data[11];
+                            const ihdrEnd = 8 + 12 + ihdrLen;
+                            const ppm = Math.round(dpi * 39.3701);
+                            const physChunk = new Uint8Array(21);
+                            physChunk[0] = 0x00; physChunk[1] = 0x00; physChunk[2] = 0x00; physChunk[3] = 0x09;
+                            physChunk[4] = 0x70; physChunk[5] = 0x48; physChunk[6] = 0x59; physChunk[7] = 0x73; // pHYs
+                            physChunk[8]  = (ppm >> 24) & 0xFF; physChunk[9]  = (ppm >> 16) & 0xFF;
+                            physChunk[10] = (ppm >> 8) & 0xFF; physChunk[11] = ppm & 0xFF;
+                            physChunk[12] = (ppm >> 24) & 0xFF; physChunk[13] = (ppm >> 16) & 0xFF;
+                            physChunk[14] = (ppm >> 8) & 0xFF; physChunk[15] = ppm & 0xFF;
+                            physChunk[16] = 0x01;
+                            const crcVal = crc32(physChunk.slice(8, 17), 'pHYs');
+                            physChunk[17] = (crcVal >> 24) & 0xFF;
+                            physChunk[18] = (crcVal >> 16) & 0xFF;
+                            physChunk[19] = (crcVal >> 8) & 0xFF;
+                            physChunk[20] = crcVal & 0xFF;
+                            const newData = new Uint8Array(data.length + physChunk.length);
+                            newData.set(data.slice(0, ihdrEnd), 0);
+                            newData.set(physChunk, ihdrEnd);
+                            newData.set(data.slice(ihdrEnd), ihdrEnd + physChunk.length);
+                            resolve(new Blob([newData], { type: 'image/png' }));
+                            return;
+                        }
+                        resolve(new Blob([data], { type: 'image/png' }));
+                    } catch (e) {
+                        resolve(blob);
                     }
-                    if (!modified) {
-                        // 插入 pHYs chunk 在 IHDR 之后
-                        let ihdrEnd = 8 + 12 + (data[8]<<24|data[9]<<16|data[10]<<8|data[11]) + 4; // IHDR chunk结束位置
-                        let ppm = Math.round(dpi * 39.3701);
-                        let physChunk = new Uint8Array(20);
-                        physChunk[0] = (0 >> 24) & 0xFF; physChunk[1] = (0 >> 16) & 0xFF; physChunk[2] = (0 >> 8) & 0xFF; physChunk[3] = 9 & 0xFF; // length 9
-                        physChunk[4] = 0x70; physChunk[5] = 0x48; physChunk[6] = 0x59; physChunk[7] = 0x73; // pHYs
-                        physChunk[8] = (ppm >> 24) & 0xFF; physChunk[9] = (ppm >> 16) & 0xFF;
-                        physChunk[10] = (ppm >> 8) & 0xFF; physChunk[11] = ppm & 0xFF;
-                        physChunk[12] = (ppm >> 24) & 0xFF; physChunk[13] = (ppm >> 16) & 0xFF;
-                        physChunk[14] = (ppm >> 8) & 0xFF; physChunk[15] = ppm & 0xFF;
-                        physChunk[16] = 0x00; physChunk[17] = 0x00; physChunk[18] = 0x00; physChunk[19] = 0x00; // crc占位简单
-                        let newData = new Uint8Array(data.length + physChunk.length);
-                        newData.set(data.slice(0, ihdrEnd), 0);
-                        newData.set(physChunk, ihdrEnd);
-                        newData.set(data.slice(ihdrEnd), ihdrEnd + physChunk.length);
-                        data = newData;
-                    }
-                    resolve(new Blob([data], { type: 'image/png' }));
                 };
-                reader.onerror = () => reject(new Error('PNG处理失败'));
+                reader.onerror = () => resolve(blob);
                 reader.readAsArrayBuffer(blob);
             });
         }
@@ -918,9 +761,9 @@
             const link = document.createElement('a');
             const url = URL.createObjectURL(processedBlob);
             link.href = url;
-            let ext = originalFile.type.split('/')[1] || 'jpg';
+            let ext = processedBlob.type.split('/')[1] || 'jpg';
             if (ext === 'jpeg') ext = 'jpg';
-            link.download = `dpi_${dpiNumber.value}.${ext}`;
+            link.download = (sourceFileName || 'dpi') + '-DPI调节' + '_' + dpiNumber.value + '.' + ext;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

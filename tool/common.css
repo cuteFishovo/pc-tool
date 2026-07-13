@@ -1,0 +1,262 @@
+/* ================= 公共基础样式 - PC-TOOL ================= */
+
+/* ---------- 全局重置 ---------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------- 页面背景 ---------- */
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: #09090b;
+    color: #f4f4f5;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image: linear-gradient(to bottom left, #242323, #131314, #000000);
+    background-attachment: fixed;
+    position: relative;
+    padding: 20px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ---------- 背景粒子画布 ---------- */
+.bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    filter: blur(2px);
+}
+
+/* ---------- 动画 ---------- */
+@keyframes fadeUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ---------- 返回链接 ---------- */
+.back-link {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    color: #a1a1aa;
+    font-size: 15px;
+    transition: color 0.3s;
+    z-index: 10;
+    background: rgba(24, 24, 27, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.back-link:hover {
+    color: #e4e4e7;
+}
+
+/* ---------- 主卡片容器 ---------- */
+.container {
+    max-width: 600px;
+    width: 100%;
+    background: rgba(24, 24, 27, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 40px;
+    border-radius: 16px;
+    animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.container h1 {
+    color: #e4e4e7;
+    margin-bottom: 25px;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.container > p {
+    color: #a1a1aa;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* ---------- 上传区域 ---------- */
+.upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 10px;
+    margin: 20px 0;
+    cursor: pointer;
+    transition: 0.3s;
+    background: rgba(255, 255, 255, 0.02);
+    text-align: center;
+    color: #a1a1aa;
+}
+
+.upload-area input[type="file"] { display: none; }
+
+.upload-area:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------- 格式选择下拉 ---------- */
+.format-select {
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e4e4e7;
+    cursor: pointer;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23a1a1aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1.2rem;
+    padding-right: 2.2rem;
+}
+
+.format-select:focus {
+    outline: none;
+    border-color: rgba(129, 140, 248, 0.5);
+}
+
+/* ---------- 通用按钮 ---------- */
+.btn, .convert-btn, .compress-btn, .extract-btn {
+    padding: 12px 25px;
+    background: rgba(24, 24, 27, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.btn:hover, .convert-btn:hover, .compress-btn:hover, .extract-btn:hover {
+    background: rgba(39, 39, 42, 0.6);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn:active, .convert-btn:active, .compress-btn:active, .extract-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ---------- 下载按钮 ---------- */
+.download-btn {
+    padding: 12px 25px;
+    background: rgba(39, 174, 96, 0.3);
+    border: 1px solid rgba(39, 174, 96, 0.3);
+    color: white;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+}
+
+.download-btn:hover {
+    background: rgba(39, 174, 96, 0.5);
+    border-color: rgba(39, 174, 96, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.download-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ---------- 结果展示 ---------- */
+.result-box {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    display: none;
+    text-align: center;
+}
+
+.result-box h3 {
+    color: #e4e4e7;
+}
+
+/* ---------- 联系提示 ---------- */
+.contact-tip {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 15px;
+    color: #71717a;
+    line-height: 1.6;
+}
+
+.contact-tip strong {
+    color: #818cf8;
+}
+
+/* ---------- 禁用按钮 ---------- */
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ---------- 滚动条美化 ---------- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+    .back-link {
+        top: 10px;
+        left: 10px;
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+}

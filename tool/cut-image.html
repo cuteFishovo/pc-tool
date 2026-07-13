@@ -3,8 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智能抠图 - 离线免费</title>
+<title>智能抠图</title>
 <link rel="icon" type="image/png" href="../favicon.png">
+    <meta name="description" content="免费在线智能抠图工具，完全离线运行，无需上传图片到服务器，隐私安全有保障，支持任意图片格式。">
+    <link rel="stylesheet" href="common.css">
 <!-- OGP 社交分享标签 -->
 <meta property="og:title" content="智能抠图 - 离线免费 | PC-TOOL">
 <meta property="og:description" content="免费在线工具集合——图片转换、视频压缩、音频转格式、图片抠图……每一个功能都为效率而生，完全免费，为人民服务！">
@@ -14,13 +16,10 @@
 <meta property="og:site_name" content="PC-TOOL">
 <meta property="og:locale" content="zh_CN">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   min-height: 100vh;
-  background: #0f0f1a;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  display: flex;
+    display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
@@ -209,6 +208,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: n
 </style>
 </head>
 <body>
+    <script>
+        (function(){var u=navigator.userAgent||navigator.vendor||window.opera;var m=/Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|webOS/i.test(u);var t=/iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(u)||(/(?:Macintosh|Windows)/i.test(u)&&'ontouchend' in document&&window.innerWidth<=1024);if((m||t)&&window.location.pathname.indexOf('mobile.html')===-1)window.location.replace('../mobile.html');})();
+    </script>
+    <canvas id="bg-canvas" class="bg-canvas"></canvas>
+    <a href="../index.html" class="back-link">← 返回转换工具首页</a>
 
 <div class="container">
   <h1>智能抠图</h1>
@@ -267,6 +271,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: n
     <span class="feature-tag">永久免费</span>
     <span class="feature-tag">无需注册</span>
   </div>
+
+  <div class="contact-tip">
+    面向大众，有任何想要的功能或者意见，请联系<br><strong>QQ：1003294905</strong>
+  </div>
 </div>
 
 <script>
@@ -291,6 +299,7 @@ const outputCtx = outputCanvas.getContext('2d');
 let originalImage = null;
 let resultBlob = null;
 let isProcessing = false;
+let sourceFileName = '';
 
 // ==================== 初始化画布 ====================
 function ensureCanvas() {
@@ -332,6 +341,7 @@ function loadImage(file) {
     img.onload = () => {
       originalImage = img;
       resultBlob = null;
+      sourceFileName = file.name.replace(/\.[^.]+$/, '');
 
       // 按比例缩放画布
       let dw = 600, dh = (img.height / img.width) * 600;
@@ -437,7 +447,7 @@ function downloadResult() {
   const url = URL.createObjectURL(resultBlob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'cutout.png';
+  a.download = (sourceFileName || 'cutout') + '-智能抠图.png';
   a.click();
   URL.revokeObjectURL(url);
   statusBar.innerHTML = '已下载 PNG（透明背景）';
@@ -500,5 +510,6 @@ document.addEventListener('paste', (e) => {
 cutBtn.disabled = true;
 downloadBtn.disabled = true;
 </script>
+<script src="common.js"></script>
 </body>
 </html>
